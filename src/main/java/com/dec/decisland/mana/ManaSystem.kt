@@ -4,7 +4,7 @@ import com.dec.decisland.DecIsland
 import com.dec.decisland.attachment.ModAttachments
 import com.dec.decisland.network.ManaSyncPayload
 import com.dec.decisland.network.Networking
-import net.minecraft.resources.Identifier
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.player.Player
@@ -25,10 +25,10 @@ object ManaSystem {
     private const val G_MIN: Double = (1 - K1) / K2
     private const val MAGICGAIN_MAP_K: Double = 1.05
     private const val MAGICGAIN_MAP_K2: Double = (-G_MIN + 1) / MAGICGAIN_MAP_K
-    private val MAGIC_INCREASE_PARTICLE_ID: Identifier =
-        Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "magic_increase_particle")
-    private val MAGIC_DECREASE_PARTICLE_ID: Identifier =
-        Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "magic_decrease_particle")
+    private val MAGIC_INCREASE_PARTICLE_ID: ResourceLocation =
+        ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "magic_increase_particle")
+    private val MAGIC_DECREASE_PARTICLE_ID: ResourceLocation =
+        ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "magic_decrease_particle")
 
     @SubscribeEvent
     @JvmStatic

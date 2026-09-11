@@ -6,7 +6,7 @@ import com.dec.decisland.mana.ManaManager
 import com.dec.decisland.network.Networking
 import net.minecraft.core.particles.ParticleOptions
 import net.minecraft.core.particles.ParticleTypes
-import net.minecraft.resources.Identifier
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.effect.MobEffectInstance
 import net.minecraft.world.effect.MobEffects
@@ -22,7 +22,7 @@ import java.util.function.Supplier
 
 @EventBusSubscriber(modid = DecIsland.MOD_ID)
 object ArmorSetEffects {
-    private val RUPERT_TEAR_PARTICLE: Identifier = Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "tear_from_rupert")
+    private val RUPERT_TEAR_PARTICLE: ResourceLocation = ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "tear_from_rupert")
 
     private enum class ArmorSetId {
         AMETHYST,
@@ -137,7 +137,7 @@ object ArmorSetEffects {
         }
 
         entity.addEffect(MobEffectInstance(MobEffects.REGENERATION, 10 * 20, 0))
-        entity.addEffect(MobEffectInstance(MobEffects.SPEED, 5 * 20, 0))
+        entity.addEffect(MobEffectInstance(MobEffects.MOVEMENT_SPEED, 5 * 20, 0))
         spawnRupertParticles(entity)
     }
 
@@ -151,9 +151,9 @@ object ArmorSetEffects {
         val roll = entity.random.nextInt(100) + 1
         when {
             roll <= 10 -> entity.addEffect(MobEffectInstance(MobEffects.WEAKNESS, 5 * 20, 0))
-            roll <= 20 -> entity.addEffect(MobEffectInstance(MobEffects.SLOWNESS, 4 * 20, 0))
+            roll <= 20 -> entity.addEffect(MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 4 * 20, 0))
             roll <= 30 -> entity.addEffect(MobEffectInstance(MobEffects.BLINDNESS, 5 * 20, 0))
-            roll <= 40 -> entity.addEffect(MobEffectInstance(MobEffects.NAUSEA, 7 * 20, 0))
+            roll <= 40 -> entity.addEffect(MobEffectInstance(MobEffects.CONFUSION, 7 * 20, 0))
         }
     }
 
@@ -166,7 +166,7 @@ object ArmorSetEffects {
             .getEntitiesOfClass(LivingEntity::class.java, entity.boundingBox.inflate(5.0)) { it != entity }
 
         nearbyTargets.forEach { target ->
-            target.addEffect(MobEffectInstance(MobEffects.SLOWNESS, 3 * 20, 1))
+            target.addEffect(MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 3 * 20, 1))
         }
         entity.addEffect(MobEffectInstance(MobEffects.HEALTH_BOOST, 30 * 20, 0))
         spawnParticles(entity, ParticleTypes.SNOWFLAKE, 12, 0.45)

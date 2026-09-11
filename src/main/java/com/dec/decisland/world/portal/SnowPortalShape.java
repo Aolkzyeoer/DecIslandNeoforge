@@ -5,8 +5,8 @@ import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.BlockUtil;
 import net.minecraft.util.Mth;
-import net.minecraft.util.BlockUtil;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.level.BlockGetter;
@@ -246,7 +246,7 @@ public final class SnowPortalShape {
         Direction widthDir = axis == Direction.Axis.X ? Direction.SOUTH : Direction.EAST;
         Direction negativeWidth = widthDir.getOpposite();
         BlockPos cursor = pos;
-        while (cursor.getY() > level.getMinY() && isInside(level.getBlockState(cursor.below()))) {
+        while (cursor.getY() > level.getMinBuildHeight() && isInside(level.getBlockState(cursor.below()))) {
             cursor = cursor.below();
         }
         for (int i = 0; i < MAX_SIZE; i++) {

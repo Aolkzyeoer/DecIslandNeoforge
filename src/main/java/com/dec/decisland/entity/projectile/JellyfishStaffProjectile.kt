@@ -1,11 +1,9 @@
 package com.dec.decisland.entity.projectile
 
-import com.dec.decisland.api.CustomInertia
 import com.dec.decisland.entity.ModEntities
 import com.dec.decisland.item.ModItems
 import net.minecraft.world.entity.EntityType
 import net.minecraft.world.entity.LivingEntity
-import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrowableItemProjectile
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.Level
@@ -13,7 +11,7 @@ import net.minecraft.world.phys.EntityHitResult
 import net.minecraft.world.phys.HitResult
 
 class JellyfishStaffProjectile(entityType: EntityType<JellyfishStaffProjectile>, level: Level) :
-    ThrowableItemProjectile(entityType, level), CustomInertia {
+    CustomInertiaProjectile(entityType, level) {
     constructor(level: Level, owner: LivingEntity, spawnedFrom: ItemStack) : this(ModEntities.JELLYFISH_BY_JELLYFISH_STAFF.get(), level) {
         setOwner(owner)
         setItem(ItemStack(ModItems.JELLYFISH_STAFF_PROJECTILE_RENDER.get()))

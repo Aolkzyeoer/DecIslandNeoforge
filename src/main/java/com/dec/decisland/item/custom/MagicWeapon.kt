@@ -4,7 +4,7 @@ import net.minecraft.core.component.DataComponents
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.InteractionHand
-import net.minecraft.world.InteractionResult
+import net.minecraft.world.InteractionResultHolder
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.item.Item
@@ -37,13 +37,13 @@ open class MagicWeapon(properties: Properties) : Item(properties) {
         val currentTime = System.currentTimeMillis()
 
         val shouldReset = if (tag.contains(LAST_ATTACK_TIME_KEY)) {
-            currentTime - tag.getLong(LAST_ATTACK_TIME_KEY).get() > getResetTimeMs()
+            currentTime - tag.getLong(LAST_ATTACK_TIME_KEY) > getResetTimeMs()
         } else {
             false
         }
 
         var attackCount = if (shouldReset) 0 else if (tag.contains(ATTACK_COUNTER_KEY)) {
-            tag.getInt(ATTACK_COUNTER_KEY).get()
+            tag.getInt(ATTACK_COUNTER_KEY)
         } else {
             0
         }
@@ -60,14 +60,15 @@ open class MagicWeapon(properties: Properties) : Item(properties) {
         }
     }
 
-    override fun use(level: Level, player: Player, hand: InteractionHand): InteractionResult {
+    override fun use(level: Level, player: Player, hand: InteractionHand): InteractionResultHolder<ItemStack> {
+        val stack = player.getItemInHand(hand)
         if (level.isClientSide) {
-            return InteractionResult.SUCCESS
+            return InteractionResultHolder.success(stack)
         }
 
-        val serverLevel = level as? ServerLevel ?: return InteractionResult.PASS
+        val serverLevel = level as? ServerLevel ?: return InteractionResultHolder.pass(stack)
         if (!judge(serverLevel, player)) {
-            return InteractionResult.FAIL
+            return InteractionResultHolder.fail(stack)
         }
 
         shootTrigger(player.getItemInHand(hand), serverLevel, player)
@@ -82,7 +83,7 @@ open class MagicWeapon(properties: Properties) : Item(properties) {
             getCastSoundPitch(),
         )
         player.swing(hand, true)
-        return InteractionResult.SUCCESS_SERVER
+        return InteractionResultHolder.consume(stack)
     }
 
     companion object {

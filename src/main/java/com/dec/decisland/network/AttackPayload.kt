@@ -5,7 +5,7 @@ import net.minecraft.nbt.CompoundTag
 import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.network.codec.StreamCodec
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload
-import net.minecraft.resources.Identifier
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.InteractionHand
 
 class AttackPayload(
@@ -18,7 +18,7 @@ class AttackPayload(
 
     companion object {
         @JvmField
-        val ID: Identifier = Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "attack_payload")
+        val ID: ResourceLocation = ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "attack_payload")
 
         @JvmField
         val TYPE: CustomPacketPayload.Type<AttackPayload> = CustomPacketPayload.Type(ID)

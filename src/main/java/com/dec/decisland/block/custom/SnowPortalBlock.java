@@ -4,6 +4,7 @@ import com.dec.decisland.world.portal.SnowPortalShape;
 import com.dec.decisland.world.portal.SnowPortalTeleporter;
 import java.util.Map;
 import java.util.Optional;
+import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
@@ -12,14 +13,13 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.InsideBlockEffectApplier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
-import net.minecraft.world.level.ScheduledTickAccess;
-import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.Portal;
@@ -29,10 +29,9 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
-import net.minecraft.world.level.portal.TeleportTransition;
+import net.minecraft.world.level.portal.DimensionTransition;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraft.world.phys.shapes.CollisionContext;
-import org.jspecify.annotations.Nullable;
 
 public class SnowPortalBlock extends Block implements Portal {
     public static final EnumProperty<Direction.Axis> AXIS = BlockStateProperties.AXIS;
@@ -53,7 +52,7 @@ public class SnowPortalBlock extends Block implements Portal {
     }
 
     @Override
-    protected void entityInside(BlockState state, Level level, BlockPos pos, Entity entity, InsideBlockEffectApplier effects, boolean canTeleport) {
+    protected void entityInside(BlockState state, Level level, BlockPos pos, Entity entity) {
         if (entity.canUsePortal(false)) {
             entity.setAsInsidePortal(this, pos);
         }
@@ -62,34 +61,35 @@ public class SnowPortalBlock extends Block implements Portal {
     @Override
     public int getPortalTransitionTime(ServerLevel level, Entity entity) {
         if (entity instanceof Player player) {
-            return player.getAbilities().invulnerable
-                ? level.getGameRules().get(GameRules.PLAYERS_NETHER_PORTAL_CREATIVE_DELAY)
-                : level.getGameRules().get(GameRules.PLAYERS_NETHER_PORTAL_DEFAULT_DELAY);
+            return Math.max(
+                1,
+                player.getAbilities().invulnerable
+                    ? level.getGameRules().getInt(GameRules.RULE_PLAYERS_NETHER_PORTAL_CREATIVE_DELAY)
+                    : level.getGameRules().getInt(GameRules.RULE_PLAYERS_NETHER_PORTAL_DEFAULT_DELAY)
+            );
         }
         return 0;
     }
 
     @Override
-    public @Nullable TeleportTransition getPortalDestination(ServerLevel level, Entity entity, BlockPos pos) {
+    public @Nullable DimensionTransition getPortalDestination(ServerLevel level, Entity entity, BlockPos pos) {
         return SnowPortalTeleporter.createTransition(level, entity, pos, level.getBlockState(pos).getValue(AXIS));
     }
 
     @Override
     protected BlockState updateShape(
         BlockState state,
-        LevelReader level,
-        ScheduledTickAccess scheduledTickAccess,
-        BlockPos pos,
         Direction direction,
-        BlockPos neighborPos,
         BlockState neighborState,
-        RandomSource random
+        LevelAccessor level,
+        BlockPos pos,
+        BlockPos neighborPos
     ) {
         Optional<SnowPortalShape> shape = SnowPortalShape.find(level, pos, state.getValue(AXIS));
         if (shape.isEmpty() || !shape.get().isComplete()) {
             return Blocks.AIR.defaultBlockState();
         }
-        return super.updateShape(state, level, scheduledTickAccess, pos, direction, neighborPos, neighborState, random);
+        return super.updateShape(state, direction, neighborState, level, pos, neighborPos);
     }
 
     @Override
@@ -115,7 +115,7 @@ public class SnowPortalBlock extends Block implements Portal {
     }
 
     @Override
-    protected ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state, boolean includeData) {
+    public ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state) {
         return ItemStack.EMPTY;
     }
 

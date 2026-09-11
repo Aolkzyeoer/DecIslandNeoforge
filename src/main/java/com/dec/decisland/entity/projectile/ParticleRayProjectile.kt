@@ -1,9 +1,9 @@
-package com.dec.decisland.entity.projectile
+﻿package com.dec.decisland.entity.projectile
 
 import com.dec.decisland.network.Networking
 import net.minecraft.network.syncher.SynchedEntityData
 import net.minecraft.core.particles.ParticleTypes
-import net.minecraft.resources.Identifier
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.sounds.SoundEvents
 import net.minecraft.sounds.SoundSource
@@ -30,10 +30,10 @@ abstract class ParticleRayProjectile(
     protected open val projectileGravity: Double = 0.0
     protected open val airInertia: Double = 1.0
     protected open val waterInertia: Double = 1.0
-    protected open val trailParticleId: Identifier? = null
+    protected open val trailParticleId: ResourceLocation? = null
     protected open val trailDurationTicks: Int = 2
     protected open val trailIntervalTicks: Int = 1
-    protected open val hitParticleIds: List<Identifier> = emptyList()
+    protected open val hitParticleIds: List<ResourceLocation> = emptyList()
     protected open val hitParticleDurationTicks: Int = 6
 
     override fun defineSynchedData(builder: SynchedEntityData.Builder) {
@@ -90,7 +90,7 @@ abstract class ParticleRayProjectile(
             damageSources().thrown(this, projectileOwner)
         }
 
-        if (target.hurtServer(serverLevel, damageSource, baseDamage)) {
+        if (target.hurt(damageSource, baseDamage)) {
             if (projectileOwner is LivingEntity) {
                 EnchantmentHelper.doPostAttackEffects(serverLevel, target, damageSource)
             }

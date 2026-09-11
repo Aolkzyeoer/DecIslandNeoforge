@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "#": {
+      "item": "decisland:lightning_stone"
+    },
+    "B": {
+      "item": "minecraft:lapis_lazuli"
+    },
+    "D": {
+      "item": "minecraft:copper_block"
+    },
+    "X": {
+      "item": "decisland:iron_stick"
+    }
+  },
+  "pattern": [
+    "DD#",
+    "B#D",
+    "XB#"
+  ],
+  "result": {
+    "count": 1,
+    "id": "decisland:thunder_rapier"
+  }
+}

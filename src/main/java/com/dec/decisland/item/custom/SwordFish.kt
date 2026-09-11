@@ -6,12 +6,13 @@ import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
 
 class SwordFish(properties: Properties) : Item(properties) {
-    override fun hurtEnemy(stack: ItemStack, target: LivingEntity, attacker: LivingEntity) {
+    override fun hurtEnemy(stack: ItemStack, target: LivingEntity, attacker: LivingEntity): Boolean {
         val damageSource = if (attacker is Player) {
             attacker.damageSources().playerAttack(attacker)
         } else {
             attacker.damageSources().mobAttack(attacker)
         }
         target.hurt(damageSource, 1.0f)
+        return true
     }
 }

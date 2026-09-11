@@ -1,9 +1,9 @@
-package com.dec.decisland.entity.projectile
+﻿package com.dec.decisland.entity.projectile
 
 import com.dec.decisland.DecIsland
 import com.dec.decisland.entity.ModEntities
 import com.dec.decisland.network.Networking
-import net.minecraft.resources.Identifier
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.EntityType
@@ -27,8 +27,8 @@ class StormFuse(entityType: EntityType<StormFuse>, level: Level) : ParticleRayPr
     override val maxLifetimeTicks: Int = 60
     override val airInertia: Double = 0.9
     override val waterInertia: Double = 1.4
-    override val hitParticleIds: List<Identifier> =
-        listOf(Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "bubble_spurt_particle"))
+    override val hitParticleIds: List<ResourceLocation> =
+        listOf(ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "bubble_spurt_particle"))
 
     override fun onEntityDamaged(serverLevel: ServerLevel, target: Entity) {
         explodeArea(serverLevel, target.position())
@@ -41,7 +41,7 @@ class StormFuse(entityType: EntityType<StormFuse>, level: Level) : ParticleRayPr
     override fun spawnAdditionalHitParticles(serverLevel: ServerLevel, pos: Vec3) {
         Networking.sendBedrockEmitterToNearby(
             serverLevel,
-            Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "bubble_spurt_particle"),
+            ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "bubble_spurt_particle"),
             pos.add(0.0, -0.5, 0.0),
             64.0,
             6,
@@ -65,7 +65,7 @@ class StormFuse(entityType: EntityType<StormFuse>, level: Level) : ParticleRayPr
         )
 
         serverLevel.getEntitiesOfClass(LivingEntity::class.java, box).forEach { living ->
-            living.hurtServer(serverLevel, damageSource, 6.0f)
+            living.hurt(damageSource, 6.0f)
         }
     }
 }

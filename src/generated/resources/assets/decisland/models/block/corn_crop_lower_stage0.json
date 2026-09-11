@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cross",
+  "textures": {
+    "cross": "decisland:block/corn_crop_lower_stage0"
+  }
+}

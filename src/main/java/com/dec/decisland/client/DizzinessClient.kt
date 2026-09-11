@@ -25,7 +25,7 @@ object DizzinessClient {
 
         val effect = player.getEffect(ModEffects.DIZZINESS) ?: return
         val level = effect.amplifier + 1
-        val blend = player.getEffectBlendFactor(ModEffects.DIZZINESS, 1.0f).coerceAtLeast(0.2f)
+        val blend = effect.getBlendFactor(player, 1.0f).coerceAtLeast(0.2f)
         val random = player.random
         val intensityScale = LEVEL_MULTIPLIER.pow(level - 1)
 

@@ -7,7 +7,6 @@ import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.sounds.SoundSource
 import net.minecraft.world.entity.Entity
-import net.minecraft.world.entity.EquipmentSlot
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.item.ItemStack
@@ -26,14 +25,15 @@ class DiamondStaff(properties: Properties) : ProjectileStaff(properties) {
         }
     }
 
-    override fun inventoryTick(stack: ItemStack, level: ServerLevel, entity: Entity, slot: EquipmentSlot?) {
-        super.inventoryTick(stack, level, entity, slot)
+    override fun inventoryTick(stack: ItemStack, level: Level, entity: Entity, slotId: Int, isSelected: Boolean) {
+        super.inventoryTick(stack, level, entity, slotId, isSelected)
+        val serverLevel = level as? ServerLevel ?: return
 
         if (entity !is Player || !hasPendingFollowUpShot(stack)) {
             return
         }
 
-        if (!isHeldBy(entity, stack) || level.gameTime < getFollowUpShotTime(stack)) {
+        if (!isHeldBy(entity, stack) || serverLevel.gameTime < getFollowUpShotTime(stack)) {
             if (!isHeldBy(entity, stack)) {
                 clearFollowUpShot(stack)
             }
@@ -41,8 +41,8 @@ class DiamondStaff(properties: Properties) : ProjectileStaff(properties) {
         }
 
         clearFollowUpShot(stack)
-        if (spawnProjectile(level, entity, stack, ::StreamEnergyBall, 1.45f, 1.3f)) {
-            level.playSound(
+        if (spawnProjectile(serverLevel, entity, stack, ::StreamEnergyBall, 1.45f, 1.3f)) {
+            serverLevel.playSound(
                 null,
                 entity.x,
                 entity.y,
@@ -59,7 +59,7 @@ class DiamondStaff(properties: Properties) : ProjectileStaff(properties) {
 
     private fun hasPendingFollowUpShot(stack: ItemStack): Boolean = readTag(stack).contains(FOLLOW_UP_SHOT_TIME_KEY)
 
-    private fun getFollowUpShotTime(stack: ItemStack): Long = readTag(stack).getLong(FOLLOW_UP_SHOT_TIME_KEY).get()
+    private fun getFollowUpShotTime(stack: ItemStack): Long = readTag(stack).getLong(FOLLOW_UP_SHOT_TIME_KEY)
 
     private fun scheduleFollowUpShot(stack: ItemStack, gameTime: Long) {
         val tag = readTag(stack)

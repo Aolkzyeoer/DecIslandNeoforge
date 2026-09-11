@@ -4,7 +4,6 @@ import com.dec.decisland.DecIsland
 import com.dec.decisland.client.model.ClothesModel
 import com.dec.decisland.client.model.EmptyModel
 import com.dec.decisland.client.model.FashionArmorModel
-import net.minecraft.client.renderer.entity.state.LivingEntityRenderState
 import net.minecraft.world.entity.EntityType
 import net.minecraft.world.entity.ai.attributes.Attributes
 import net.neoforged.bus.api.SubscribeEvent

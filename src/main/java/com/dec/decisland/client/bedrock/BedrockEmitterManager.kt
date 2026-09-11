@@ -9,7 +9,7 @@ import com.dec.decisland.particles.bedrock.Molang
 import com.dec.decisland.particles.bedrock.MolangContext
 import net.minecraft.client.Minecraft
 import net.minecraft.client.multiplayer.ClientLevel
-import net.minecraft.data.AtlasIds
+import net.minecraft.client.renderer.texture.TextureAtlas
 import net.minecraft.world.phys.Vec3
 import kotlin.math.cos
 import kotlin.math.cbrt
@@ -32,7 +32,7 @@ object BedrockEmitterManager {
         }
     }
 
-    fun spawnAt(id: net.minecraft.resources.Identifier, position: Vec3, durationTicks: Int = 100): Boolean {
+    fun spawnAt(id: net.minecraft.resources.ResourceLocation, position: Vec3, durationTicks: Int = 100): Boolean {
         val definition = ModParticles.resolveBedrockDefinition(id) ?: return false
         val spriteIds = ModParticles.resolveBedrockSpriteIds(id)
         if (spriteIds.isEmpty()) return false
@@ -42,7 +42,7 @@ object BedrockEmitterManager {
 
     private class EmitterInstance(
         private val definition: BedrockParticleEffectDefinition,
-        private val spriteIds: List<net.minecraft.resources.Identifier>,
+        private val spriteIds: List<net.minecraft.resources.ResourceLocation>,
         private val origin: Vec3,
         private val maxTicks: Int,
     ) {
@@ -94,7 +94,7 @@ object BedrockEmitterManager {
                 val velocity = computeVelocity(spawn.direction)
                 val minecraft = Minecraft.getInstance()
                 val engine = minecraft.particleEngine
-                val atlas = minecraft.atlasManager.getAtlasOrThrow(AtlasIds.PARTICLES)
+                val atlas = minecraft.modelManager.getAtlas(TextureAtlas.LOCATION_PARTICLES)
                 val spriteId = spriteIds[(Math.random() * spriteIds.size).toInt().coerceIn(0, spriteIds.lastIndex)]
                 val sprite = atlas.getSprite(spriteId)
                 val particle = BedrockBillboardParticle(

@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_crab_leg": {
+      "conditions": {
+        "items": [
+          {
+            "items": "decisland:crab_leg"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "decisland:crab_leg_cooked_from_smoking"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_crab_leg"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "decisland:crab_leg_cooked_from_smoking"
+    ]
+  }
+}

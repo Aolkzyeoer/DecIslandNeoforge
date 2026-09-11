@@ -21,11 +21,7 @@ abstract class ProjectileStaff(properties: Properties) : MagicWeapon(properties)
     ): Boolean {
         val projectile = projectileFactory(serverLevel, source, stack)
         projectile.shootFromRotation(source, source.xRot, source.yRot, 0.0f, velocity, inaccuracy)
-        val added = serverLevel.addFreshEntity(projectile)
-        if (added) {
-            projectile.applyOnProjectileSpawned(serverLevel, stack)
-        }
-        return added
+        return serverLevel.addFreshEntity(projectile)
     }
 
     override fun judge(level: Level, player: Player): Boolean {

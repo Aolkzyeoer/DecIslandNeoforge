@@ -1,0 +1,16 @@
+{
+  "values": [
+    "decisland:blue_gem_ore",
+    "decisland:red_gem_ore",
+    "decisland:stream_ore",
+    "decisland:lava_ore",
+    "decisland:end_diamond_ore",
+    "decisland:end_emerald_ore",
+    "decisland:end_gold_ore",
+    "decisland:end_redstone_ore",
+    "decisland:nether_diamond_ore",
+    "decisland:nether_emerald_ore",
+    "decisland:nether_redstone_ore",
+    "decisland:soul_soil_diamond_ore"
+  ]
+}

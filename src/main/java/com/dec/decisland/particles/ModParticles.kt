@@ -37,7 +37,7 @@ import com.google.gson.JsonParser
 import net.minecraft.core.particles.ParticleType
 import net.minecraft.core.particles.SimpleParticleType
 import net.minecraft.core.registries.BuiltInRegistries
-import net.minecraft.resources.Identifier
+import net.minecraft.resources.ResourceLocation
 import net.neoforged.bus.api.IEventBus
 import net.neoforged.neoforge.registries.DeferredHolder
 import net.neoforged.neoforge.registries.DeferredRegister
@@ -52,8 +52,8 @@ object ModParticles {
     private const val BEDROCK_MANIFEST = "assets/decisland/particles/bedrock_manifest.txt"
 
     private val particleConfigs = mutableListOf<ParticleConfig>()
-    private val bedrockDefinitionById = LinkedHashMap<Identifier, BedrockParticleEffectDefinition>()
-    private val bedrockSpritesById = LinkedHashMap<Identifier, List<Identifier>>()
+    private val bedrockDefinitionById = LinkedHashMap<ResourceLocation, BedrockParticleEffectDefinition>()
+    private val bedrockSpritesById = LinkedHashMap<ResourceLocation, List<ResourceLocation>>()
 
     @Volatile
     private var bedrockLoaded = false
@@ -114,19 +114,19 @@ object ModParticles {
     fun getParticleConfigs(): List<ParticleConfig> = particleConfigs
 
     @JvmStatic
-    fun resolveBedrockDefinition(id: Identifier): BedrockParticleEffectDefinition? {
+    fun resolveBedrockDefinition(id: ResourceLocation): BedrockParticleEffectDefinition? {
         ensureBedrockLoaded()
         return bedrockDefinitionById[normalizeBedrockId(id)]
     }
 
     @JvmStatic
-    fun resolveBedrockSpriteId(id: Identifier): Identifier? {
+    fun resolveBedrockSpriteId(id: ResourceLocation): ResourceLocation? {
         ensureBedrockLoaded()
         return bedrockSpritesById[normalizeBedrockId(id)]?.firstOrNull()
     }
 
     @JvmStatic
-    fun resolveBedrockSpriteIds(id: Identifier): List<Identifier> {
+    fun resolveBedrockSpriteIds(id: ResourceLocation): List<ResourceLocation> {
         ensureBedrockLoaded()
         return bedrockSpritesById[normalizeBedrockId(id)] ?: emptyList()
     }
@@ -159,12 +159,12 @@ object ModParticles {
         }
     }
 
-    private fun parseBedrockResource(stream: java.io.InputStream): Triple<Identifier, BedrockParticleEffectDefinition, List<Identifier>?>? {
+    private fun parseBedrockResource(stream: java.io.InputStream): Triple<ResourceLocation, BedrockParticleEffectDefinition, List<ResourceLocation>?>? {
         val root = InputStreamReader(stream).use { JsonParser.parseReader(it) }
         val effect = root.asJsonObjectOrNull()?.getAsJsonObjectOrNull("particle_effect") ?: return null
         val description = effect.getAsJsonObjectOrNull("description") ?: return null
         val rawIdentifier = description.getAsJsonPrimitiveOrNull("identifier")?.asString ?: return null
-        val id = normalizeBedrockId(Identifier.tryParse(rawIdentifier) ?: return null)
+        val id = normalizeBedrockId(ResourceLocation.tryParse(rawIdentifier) ?: return null)
         val texturePath = description.getAsJsonObjectOrNull("basic_render_parameters")
             ?.getAsJsonPrimitiveOrNull("texture")
             ?.asString
@@ -344,13 +344,13 @@ object ModParticles {
         return Triple(id, definition, spriteIds)
     }
 
-    private fun normalizeBedrockId(id: Identifier): Identifier =
+    private fun normalizeBedrockId(id: ResourceLocation): ResourceLocation =
         when (id.namespace) {
-            "dec", "the-poetry-of-winter" -> Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, id.path)
+            "dec", "the-poetry-of-winter" -> ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, id.path)
             else -> id
         }
 
-    private fun texturePathToSpriteIds(raw: String): List<Identifier>? {
+    private fun texturePathToSpriteIds(raw: String): List<ResourceLocation>? {
         val normalized = raw.replace('\\', '/').removeSuffix(".png")
         val hasExplicitNamespace = normalized.contains(':')
         val namespace: String
@@ -366,15 +366,15 @@ object ModParticles {
         val path = if (rawPath.startsWith("textures/")) rawPath else "textures/$rawPath"
         return when {
             path == "textures/particle/sga_*" && namespace == "minecraft" ->
-                ('a'..'z').map { char -> Identifier.fromNamespaceAndPath(namespace, "sga_$char") }
+                ('a'..'z').map { char -> ResourceLocation.fromNamespaceAndPath(namespace, "sga_$char") }
             path.startsWith("textures/particle/") ->
-                listOf(Identifier.fromNamespaceAndPath(namespace, path.removePrefix("textures/particle/")))
+                listOf(ResourceLocation.fromNamespaceAndPath(namespace, path.removePrefix("textures/particle/")))
             path.startsWith("textures/wb_par/") ->
-                listOf(Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "wb_par/${path.removePrefix("textures/wb_par/")}"))
+                listOf(ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "wb_par/${path.removePrefix("textures/wb_par/")}"))
             path.startsWith("textures/EPIC/") ->
-                listOf(Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "epic/${path.removePrefix("textures/EPIC/")}"))
+                listOf(ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "epic/${path.removePrefix("textures/EPIC/")}"))
             path.startsWith("textures/epic/") ->
-                listOf(Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "epic/${path.removePrefix("textures/epic/")}"))
+                listOf(ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "epic/${path.removePrefix("textures/epic/")}"))
             else -> null
         }
     }

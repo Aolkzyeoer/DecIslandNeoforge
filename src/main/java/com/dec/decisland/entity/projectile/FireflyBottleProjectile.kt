@@ -10,7 +10,7 @@ import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.EntityType
 import net.minecraft.world.entity.ExperienceOrb
 import net.minecraft.world.entity.LivingEntity
-import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrowableItemProjectile
+import net.minecraft.world.entity.projectile.ThrowableItemProjectile
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.Level
@@ -53,7 +53,7 @@ class FireflyBottleProjectile(entityType: EntityType<FireflyBottleProjectile>, l
             1.1f + random.nextFloat() * 0.2f,
         )
         serverLevel.sendParticles(
-            ParticleTypes.FIREFLY,
+            ParticleTypes.GLOW,
             pos.x,
             pos.y,
             pos.z,
@@ -64,7 +64,7 @@ class FireflyBottleProjectile(entityType: EntityType<FireflyBottleProjectile>, l
             0.015,
         )
         serverLevel.sendParticles(
-            ParticleTypes.FIREFLY,
+            ParticleTypes.GLOW,
             pos.x,
             pos.y + 0.1,
             pos.z,

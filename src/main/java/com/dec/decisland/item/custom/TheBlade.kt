@@ -1,7 +1,7 @@
 package com.dec.decisland.item.custom
 
 import com.dec.decisland.DecIsland
-import net.minecraft.resources.Identifier
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerLevel
 
 class TheBlade(properties: Properties) : Katana(properties) {
@@ -28,7 +28,7 @@ class TheBlade(properties: Properties) : Katana(properties) {
     }
 
     companion object {
-        private val THE_BLADE_PARTICLE_ID: Identifier =
-            Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "the_blade_particle")
+        private val THE_BLADE_PARTICLE_ID: ResourceLocation =
+            ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "the_blade_particle")
     }
 }

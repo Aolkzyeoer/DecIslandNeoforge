@@ -16,7 +16,7 @@ BiliBili: LiLeyi
 
 ## Version
 
-So far, we support Minecraft 1.21.11 and Neoforge 21.11.38-beta
+So far, we support Minecraft 1.21.1 and Neoforge 21.1.247
 
 ## 物品移植进度（基岩版 → JE）
 

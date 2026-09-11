@@ -14,18 +14,24 @@ import com.dec.decisland.item.ModItems
 import com.dec.decisland.item.category.Material
 import com.dec.decisland.item.category.Food
 import com.dec.decisland.item.category.Crop
-import net.minecraft.client.data.models.BlockModelGenerators
-import net.minecraft.client.data.models.model.ModelTemplates
-import net.minecraft.client.data.models.model.TextureMapping
-import net.minecraft.client.data.models.model.TextureSlot
-import net.minecraft.client.data.models.blockstates.MultiVariantGenerator
-import net.minecraft.client.data.models.blockstates.PropertyDispatch
+import net.minecraft.core.Direction
+import net.minecraft.data.models.BlockModelGenerators
+import net.minecraft.data.models.model.DelegatedModel
+import net.minecraft.data.models.model.ModelLocationUtils
+import net.minecraft.data.models.model.ModelTemplates
+import net.minecraft.data.models.model.TextureMapping
+import net.minecraft.data.models.model.TextureSlot
+import net.minecraft.data.models.blockstates.MultiVariantGenerator
+import net.minecraft.data.models.blockstates.PropertyDispatch
+import net.minecraft.data.models.blockstates.Variant
+import net.minecraft.data.models.blockstates.VariantProperties
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.core.Holder
-import net.minecraft.resources.Identifier
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.tags.BlockTags
 import net.minecraft.tags.TagKey
 import net.minecraft.world.item.CreativeModeTab
+import net.minecraft.world.item.Item
 import net.minecraft.world.item.Items
 import net.minecraft.world.level.ItemLike
 import net.minecraft.world.level.block.Block
@@ -36,11 +42,14 @@ import net.minecraft.world.level.block.RotatedPillarBlock
 import net.minecraft.world.level.block.SoundType
 import net.minecraft.world.level.block.state.BlockState
 import net.minecraft.world.level.block.state.BlockBehaviour
+import net.minecraft.world.level.block.state.properties.BlockStateProperties
 import net.minecraft.world.level.block.state.properties.DoubleBlockHalf
+import net.minecraft.world.level.block.state.properties.IntegerProperty
+import net.minecraft.world.level.block.state.properties.Property
 import net.minecraft.world.level.material.PushReaction
 import net.minecraft.world.level.material.MapColor
 import net.minecraft.world.level.storage.loot.predicates.LootItemBlockStatePropertyCondition
-import net.minecraft.advancements.criterion.StatePropertiesPredicate
+import net.minecraft.advancements.critereon.StatePropertiesPredicate
 import net.neoforged.bus.api.IEventBus
 import net.neoforged.neoforge.registries.DeferredBlock
 import net.neoforged.neoforge.registries.DeferredRegister
@@ -692,7 +701,7 @@ object ModBlocks {
         ::SnowPortalBlock,
         Supplier {
             BlockBehaviour.Properties.of()
-                .noCollision()
+                .noOcclusion()
                 .strength(-1.0f)
                 .lightLevel { 11 }
                 .sound(SoundType.GLASS)
@@ -739,7 +748,7 @@ object ModBlocks {
         props: Supplier<BlockBehaviour.Properties>,
         shouldRegistryBlockItem: Boolean,
     ): DeferredBlock<T> {
-        val block = BLOCKS.registerBlock(name, func, props)
+        val block = BLOCKS.registerBlock(name, func, props.get())
         if (shouldRegistryBlockItem) {
             ModItems.ITEMS.registerSimpleBlockItem(block)
         }
@@ -760,7 +769,7 @@ object ModBlocks {
 
     @Suppress("UNCHECKED_CAST")
     private fun <T : Block> registerBlock(config: BlockConfig): DeferredBlock<T> {
-        val block = BLOCKS.registerBlock(config.name, config.func, config.props) as DeferredBlock<T>
+        val block = BLOCKS.registerBlock(config.name, config.func, config.props.get()) as DeferredBlock<T>
         blockConfigs.add(config)
         if (config.shouldRegistryBlockItem) {
             ModItems.ITEMS.registerSimpleBlockItem(block)
@@ -897,7 +906,13 @@ object ModBlocks {
     ) {
         val block = getBlockByName("block.${DecIsland.MOD_ID}.${spec.name}").value()
         when (spec.model.kind) {
-            BlockModelSpec.Kind.CUBE_ALL -> blockModels.createTrivialCube(block)
+            BlockModelSpec.Kind.CUBE_ALL -> {
+                blockModels.createTrivialCube(block)
+                // createTrivialCube 只生成方块模型与 blockstate，需要为 BlockItem 补一个委托物品模型
+                if (block.asItem() != Items.AIR) {
+                    delegateItemModel(blockModels, block, ModelLocationUtils.getModelLocation(block))
+                }
+            }
 
             BlockModelSpec.Kind.CUBE_BOTTOM_TOP -> {
                 val model = ModelTemplates.CUBE_BOTTOM_TOP.create(
@@ -908,10 +923,8 @@ object ModBlocks {
                         .put(TextureSlot.BOTTOM, blockTexture(spec.model.bottomTexture!!)),
                     blockModels.modelOutput,
                 )
-                blockModels.blockStateOutput.accept(
-                    BlockModelGenerators.createSimpleBlock(block, BlockModelGenerators.plainVariant(model)),
-                )
-                blockModels.registerSimpleItemModel(block, model)
+                blockModels.blockStateOutput.accept(simpleBlock(block, model))
+                delegateItemModel(blockModels, block, model)
             }
 
             BlockModelSpec.Kind.COLUMN -> {
@@ -923,10 +936,8 @@ object ModBlocks {
                     ),
                     blockModels.modelOutput,
                 )
-                blockModels.blockStateOutput.accept(
-                    BlockModelGenerators.createAxisAlignedPillarBlock(block, BlockModelGenerators.plainVariant(model)),
-                )
-                blockModels.registerSimpleItemModel(block, model)
+                blockModels.blockStateOutput.accept(axisAlignedPillarBlock(block, model))
+                delegateItemModel(blockModels, block, model)
             }
         }
     }
@@ -936,18 +947,19 @@ object ModBlocks {
         blockModels: BlockModelGenerators,
     ) {
         val block = getBlockByName("block.${DecIsland.MOD_ID}.${spec.name}").value()
-        blockModels.createCrossBlock(
+        val model = ModelTemplates.CROSS.create(
             block,
-            BlockModelGenerators.PlantType.NOT_TINTED,
             TextureMapping.cross(blockTexture(spec.textureName)),
+            blockModels.modelOutput,
         )
-        val itemModel =
+        blockModels.blockStateOutput.accept(simpleBlock(block, model))
+        if (block.asItem() != Items.AIR) {
             ModelTemplates.FLAT_ITEM.create(
-                block.asItem(),
+                ModelLocationUtils.getModelLocation(block.asItem()),
                 TextureMapping.layer0(blockTexture(spec.textureName)),
                 blockModels.modelOutput,
-        )
-        blockModels.registerSimpleItemModel(block, itemModel)
+            )
+        }
     }
 
     private fun generateSimpleCropModel(
@@ -956,29 +968,31 @@ object ModBlocks {
     ) {
         val block = getBlockByName("block.${DecIsland.MOD_ID}.${spec.name}").value()
         if (spec.crossModel) {
-            blockModels.registerSimpleFlatItemModel(spec.seedItem.get().asItem())
-            val stageModels = mutableMapOf<Int, Identifier>()
+            createSimpleFlatItemModel(blockModels, spec.seedItem.get().asItem())
+            val stageModels = mutableMapOf<Int, ResourceLocation>()
             blockModels.blockStateOutput.accept(
-                MultiVariantGenerator.dispatch(block).with(
-                    PropertyDispatch.initial(CropBlock.AGE).generate { age ->
+                MultiVariantGenerator.multiVariant(block).with(
+                    PropertyDispatch.property(CropBlock.AGE).generate { age ->
                         val stage = spec.ageToModelStage[age.toInt()]
                         val model = stageModels.getOrPut(stage) {
                             val suffix = "_stage$stage"
-                            val textureMapping = TextureMapping.cross(TextureMapping.getBlockTexture(block, suffix))
-                            BlockModelGenerators.PlantType.NOT_TINTED
-                                .getCross()
-                                .createWithSuffix(block, suffix, textureMapping, blockModels.modelOutput)
+                            ModelTemplates.CROSS.createWithSuffix(
+                                block,
+                                suffix,
+                                TextureMapping.cross(TextureMapping.getBlockTexture(block, suffix)),
+                                blockModels.modelOutput,
+                            )
                         }
-                        BlockModelGenerators.plainVariant(model)
+                        Variant.variant().with(VariantProperties.MODEL, model)
                     },
                 ),
             )
         } else {
-            blockModels.createCropBlock(block, CropBlock.AGE, *spec.ageToModelStage)
+            createCropBlockModel(blockModels, block, CropBlock.AGE, spec.ageToModelStage)
         }
     }
 
-    private fun blockTexture(name: String): Identifier = Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "block/$name")
+    private fun blockTexture(name: String): ResourceLocation = ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "block/$name")
 
     private fun generateSimpleBlockLoot(
         spec: SimpleBlockSpec,
@@ -1013,11 +1027,11 @@ object ModBlocks {
 
     private fun generateCornCropModel(blockModels: BlockModelGenerators) {
         val block = getBlockByName("block.${DecIsland.MOD_ID}.corn_crop").value()
-        blockModels.registerSimpleFlatItemModel(Crop.CORN_SEEDS.get().asItem())
-        val stageModels = mutableMapOf<String, Identifier>()
+        createSimpleFlatItemModel(blockModels, Crop.CORN_SEEDS.get().asItem())
+        val stageModels = mutableMapOf<String, ResourceLocation>()
         blockModels.blockStateOutput.accept(
-            MultiVariantGenerator.dispatch(block).with(
-                PropertyDispatch.initial(CornCropBlock.AGE, DoublePlantBlock.HALF).generate { age, half ->
+            MultiVariantGenerator.multiVariant(block).with(
+                PropertyDispatch.properties(CornCropBlock.AGE, DoublePlantBlock.HALF).generate { age, half ->
                     val stage =
                         if (half == DoubleBlockHalf.UPPER) {
                             age.toInt().coerceAtMost(CornCropBlock.UPPER_MAX_AGE)
@@ -1028,14 +1042,63 @@ object ModBlocks {
                     val suffix = "_${halfName}_stage$stage"
                     val model = stageModels.getOrPut(suffix) {
                         val textureMapping = TextureMapping.cross(TextureMapping.getBlockTexture(block, suffix))
-                        BlockModelGenerators.PlantType.NOT_TINTED
-                            .getCross()
-                            .createWithSuffix(block, suffix, textureMapping, blockModels.modelOutput)
+                        ModelTemplates.CROSS.createWithSuffix(block, suffix, textureMapping, blockModels.modelOutput)
                     }
-                    BlockModelGenerators.plainVariant(model)
+                    Variant.variant().with(VariantProperties.MODEL, model)
                 },
             ),
         )
+    }
+
+    // 1.21.1 ports of BlockModelGenerators' private/package-private helpers built on the public data-model classes.
+    private fun simpleBlock(block: Block, modelLocation: ResourceLocation): MultiVariantGenerator =
+        MultiVariantGenerator.multiVariant(block, Variant.variant().with(VariantProperties.MODEL, modelLocation))
+
+    private fun axisAlignedPillarBlock(block: Block, modelLocation: ResourceLocation): MultiVariantGenerator =
+        MultiVariantGenerator.multiVariant(block, Variant.variant().with(VariantProperties.MODEL, modelLocation))
+            .with(
+                PropertyDispatch.property(BlockStateProperties.AXIS)
+                    .select(Direction.Axis.Y, Variant.variant())
+                    .select(Direction.Axis.Z, Variant.variant().with(VariantProperties.X_ROT, VariantProperties.Rotation.R90))
+                    .select(
+                        Direction.Axis.X,
+                        Variant.variant()
+                            .with(VariantProperties.X_ROT, VariantProperties.Rotation.R90)
+                            .with(VariantProperties.Y_ROT, VariantProperties.Rotation.R90),
+                    ),
+            )
+
+    private fun delegateItemModel(blockModels: BlockModelGenerators, block: Block, modelLocation: ResourceLocation) {
+        blockModels.modelOutput.accept(ModelLocationUtils.getModelLocation(block.asItem()), DelegatedModel(modelLocation))
+    }
+
+    private fun createSimpleFlatItemModel(blockModels: BlockModelGenerators, item: Item) {
+        ModelTemplates.FLAT_ITEM.create(ModelLocationUtils.getModelLocation(item), TextureMapping.layer0(item), blockModels.modelOutput)
+    }
+
+    private fun createCropBlockModel(
+        blockModels: BlockModelGenerators,
+        cropBlock: Block,
+        ageProperty: IntegerProperty,
+        ageToVisualStageMapping: IntArray,
+    ) {
+        require(ageProperty.possibleValues.size == ageToVisualStageMapping.size)
+        val stageModels = mutableMapOf<Int, ResourceLocation>()
+        val propertyDispatch = PropertyDispatch.property(ageProperty).generate { age ->
+            val stage = ageToVisualStageMapping[age.toInt()]
+            val model = stageModels.getOrPut(stage) {
+                val suffix = "_stage$stage"
+                ModelTemplates.CROP.createWithSuffix(
+                    cropBlock,
+                    suffix,
+                    TextureMapping.crop(TextureMapping.getBlockTexture(cropBlock, suffix)),
+                    blockModels.modelOutput,
+                )
+            }
+            Variant.variant().with(VariantProperties.MODEL, model)
+        }
+        createSimpleFlatItemModel(blockModels, cropBlock.asItem())
+        blockModels.blockStateOutput.accept(MultiVariantGenerator.multiVariant(cropBlock).with(propertyDispatch))
     }
 
     private fun generateCornCropLoot(lootTables: ModBlockLootTablesProvider) {

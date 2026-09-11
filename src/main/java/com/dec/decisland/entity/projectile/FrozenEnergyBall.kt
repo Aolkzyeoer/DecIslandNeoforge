@@ -1,4 +1,4 @@
-package com.dec.decisland.entity.projectile
+﻿package com.dec.decisland.entity.projectile
 
 import com.dec.decisland.entity.ModEntities
 import net.minecraft.server.level.ServerLevel
@@ -24,7 +24,7 @@ class FrozenEnergyBall(entityType: EntityType<FrozenEnergyBall>, level: Level) :
 
     override fun onEntityDamaged(serverLevel: ServerLevel, target: Entity) {
         if (target is LivingEntity) {
-            target.addEffect(MobEffectInstance(MobEffects.SLOWNESS, 200, 1))
+            target.addEffect(MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 200, 1))
         }
     }
 }

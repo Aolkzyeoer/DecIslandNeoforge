@@ -69,7 +69,6 @@ class AbsoluteZeroSmokeSeedParticle(
             xSpeed: Double,
             ySpeed: Double,
             zSpeed: Double,
-            random: RandomSource,
         ): Particle = AbsoluteZeroSmokeSeedParticle(level, x, y, z, numParticles, radius, initialSpeed)
     }
 

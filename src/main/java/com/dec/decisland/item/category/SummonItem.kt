@@ -4,8 +4,8 @@ import com.dec.decisland.item.ItemConfig
 import com.dec.decisland.item.ModCreativeModeTabs
 import com.dec.decisland.item.ModItems
 import com.dec.decisland.item.custom.GlintItem
-import net.minecraft.client.data.models.model.ModelTemplate
-import net.minecraft.client.data.models.model.ModelTemplates
+import net.minecraft.data.models.model.ModelTemplate
+import net.minecraft.data.models.model.ModelTemplates
 import net.minecraft.world.item.CreativeModeTab
 import net.minecraft.world.item.Item
 import net.neoforged.neoforge.registries.DeferredItem

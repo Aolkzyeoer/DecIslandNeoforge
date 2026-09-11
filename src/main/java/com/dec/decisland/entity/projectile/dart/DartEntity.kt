@@ -1,7 +1,7 @@
 package com.dec.decisland.entity.projectile.dart
 
-import com.dec.decisland.api.CustomInertia
 import com.dec.decisland.DecIsland
+import com.dec.decisland.entity.projectile.CustomInertiaProjectile
 import com.dec.decisland.network.Networking
 import net.minecraft.core.particles.ItemParticleOption
 import net.minecraft.core.particles.ParticleOptions
@@ -10,7 +10,7 @@ import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.network.syncher.EntityDataAccessor
 import net.minecraft.network.syncher.EntityDataSerializers
 import net.minecraft.network.syncher.SynchedEntityData
-import net.minecraft.resources.Identifier
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.sounds.SoundEvent
 import net.minecraft.sounds.SoundSource
@@ -19,7 +19,6 @@ import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.EntityType
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.item.ItemEntity
-import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrowableItemProjectile
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.Items
@@ -30,7 +29,7 @@ import net.minecraft.world.phys.EntityHitResult
 import net.minecraft.world.phys.HitResult
 
 open class DartEntity(entityType: EntityType<out DartEntity>, level: Level) :
-    ThrowableItemProjectile(entityType, level), CustomInertia {
+    CustomInertiaProjectile(entityType, level) {
     var spinRotationO: Float = 0.0f
         private set
     var spinRotation: Float = 0.0f
@@ -157,7 +156,7 @@ open class DartEntity(entityType: EntityType<out DartEntity>, level: Level) :
     protected open val definition: DartDefinition
         get() = definitionFor(type)
 
-    fun sendHitEmitters(particleIds: Iterable<Identifier>, radius: Double = 64.0, durationTicks: Int = 6) {
+    fun sendHitEmitters(particleIds: Iterable<ResourceLocation>, radius: Double = 64.0, durationTicks: Int = 6) {
         val serverLevel = serverLevel() ?: return
         val pos = position()
         particleIds.forEach { id ->
@@ -220,11 +219,11 @@ open class DartEntity(entityType: EntityType<out DartEntity>, level: Level) :
         private val DATA_RANDOM_TILT: EntityDataAccessor<Float> =
             SynchedEntityData.defineId(DartEntity::class.java, EntityDataSerializers.FLOAT)
         private const val VANILLA_AIR_INERTIA: Double = 0.99
-        private val DEFINITIONS_BY_ID: MutableMap<Identifier, DartDefinition> = linkedMapOf()
+        private val DEFINITIONS_BY_ID: MutableMap<ResourceLocation, DartDefinition> = linkedMapOf()
 
         @JvmStatic
         fun registerDefinition(definition: DartDefinition) {
-            DEFINITIONS_BY_ID[Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, definition.path)] = definition
+            DEFINITIONS_BY_ID[ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, definition.path)] = definition
         }
 
         @JvmStatic

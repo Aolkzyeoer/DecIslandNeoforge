@@ -1,0 +1,100 @@
+{
+  "values": {
+    "decisland:autumn_leaves": {
+      "replace": true,
+      "value": {
+        "chance": 0.3
+      }
+    },
+    "decisland:bizarre_chilli_seeds": {
+      "replace": true,
+      "value": {
+        "chance": 0.3
+      }
+    },
+    "decisland:bracken": {
+      "replace": true,
+      "value": {
+        "chance": 0.3
+      }
+    },
+    "decisland:cob": {
+      "replace": true,
+      "value": {
+        "chance": 0.3
+      }
+    },
+    "decisland:corn": {
+      "replace": true,
+      "value": {
+        "chance": 0.65
+      }
+    },
+    "decisland:corn_seeds": {
+      "replace": true,
+      "value": {
+        "chance": 0.3
+      }
+    },
+    "decisland:experience_flower_seeds": {
+      "replace": true,
+      "value": {
+        "chance": 0.3
+      }
+    },
+    "decisland:fritillary_seeds": {
+      "replace": true,
+      "value": {
+        "chance": 0.3
+      }
+    },
+    "decisland:houttuynia_seeds": {
+      "replace": true,
+      "value": {
+        "chance": 0.3
+      }
+    },
+    "decisland:lava_flower_seeds": {
+      "replace": true,
+      "value": {
+        "chance": 0.3
+      }
+    },
+    "decisland:leek": {
+      "replace": true,
+      "value": {
+        "chance": 0.5
+      }
+    },
+    "decisland:leek_seeds": {
+      "replace": true,
+      "value": {
+        "chance": 0.3
+      }
+    },
+    "decisland:mooli": {
+      "replace": true,
+      "value": {
+        "chance": 0.5
+      }
+    },
+    "decisland:mooli_seeds": {
+      "replace": true,
+      "value": {
+        "chance": 0.3
+      }
+    },
+    "decisland:rice_seeds": {
+      "replace": true,
+      "value": {
+        "chance": 0.3
+      }
+    },
+    "decisland:soybean": {
+      "replace": true,
+      "value": {
+        "chance": 0.3
+      }
+    }
+  }
+}

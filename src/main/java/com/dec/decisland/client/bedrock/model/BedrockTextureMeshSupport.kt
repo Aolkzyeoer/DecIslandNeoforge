@@ -4,9 +4,9 @@ import com.mojang.blaze3d.vertex.PoseStack
 import net.minecraft.client.Minecraft
 import net.minecraft.client.model.geom.ModelPart
 import net.minecraft.client.model.geom.PartPose
-import net.minecraft.client.renderer.SubmitNodeCollector
-import net.minecraft.client.renderer.rendertype.RenderType
-import net.minecraft.resources.Identifier
+import net.minecraft.client.renderer.MultiBufferSource
+import net.minecraft.client.renderer.RenderType
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.item.ItemStack
 import org.joml.Vector3f
 import java.awt.image.BufferedImage
@@ -30,13 +30,36 @@ object BedrockTextureMeshSupport {
         isAccessible = true
     }
 
-    private val textureMaskCache = ConcurrentHashMap<Identifier, TextureMask>()
+    private val polygonsField = ModelPart.Cube::class.java.getDeclaredField("polygons").apply {
+        isAccessible = true
+    }
+
+    // ModelPart.Vertex and ModelPart.Polygon are package-private in 1.21.1, so they
+    // cannot be referenced directly from Kotlin. Reach them via reflection.
+    private val vertexClass: Class<*> = Class.forName("net.minecraft.client.model.geom.ModelPart\$Vertex")
+    private val vertexCtor = vertexClass
+        .getDeclaredConstructor(
+            java.lang.Float.TYPE,
+            java.lang.Float.TYPE,
+            java.lang.Float.TYPE,
+            java.lang.Float.TYPE,
+            java.lang.Float.TYPE,
+        ).apply { isAccessible = true }
+
+    private val polygonClass: Class<*> = Class.forName("net.minecraft.client.model.geom.ModelPart\$Polygon")
+    private val polygonVerticesField = polygonClass.getDeclaredField("vertices").apply { isAccessible = true }
+    private val polygonNormalField = polygonClass.getDeclaredField("normal").apply { isAccessible = true }
+
+    private fun vertex(x: Float, y: Float, z: Float, u: Float, v: Float): Any =
+        vertexCtor.newInstance(x, y, z, u, v) as Any
+
+    private val textureMaskCache = ConcurrentHashMap<ResourceLocation, TextureMask>()
 
     fun attachMeshesToNamedBones(
         root: ModelPart,
         geometry: BedrockGeometry,
         transformMode: TransformMode = TransformMode.DIRECT,
-        textureId: Identifier? = null,
+        textureId: ResourceLocation? = null,
         meshRenderMode: MeshRenderMode = MeshRenderMode.POLYGON,
     ) {
         if (meshRenderMode != MeshRenderMode.POLYGON || geometry.bones.none { it.textureMeshes.isNotEmpty() }) {
@@ -44,9 +67,9 @@ object BedrockTextureMeshSupport {
         }
 
         val textureMask = textureId?.let(::textureMask)
-        val lookup = root.createPartLookup()
+        val lookup = createPartLookup(root)
         geometry.bones.forEach { bone ->
-            val parent = lookup.apply(bone.name) ?: return@forEach
+            val parent = lookup(bone.name) ?: return@forEach
             bone.textureMeshes.forEachIndexed { index, textureMesh ->
                 val childName = "__texture_mesh_$index"
                 if (!parent.hasChild(childName)) {
@@ -65,7 +88,7 @@ object BedrockTextureMeshSupport {
     fun submitStoredSideMeshes(
         root: ModelPart,
         poseStack: PoseStack,
-        collector: SubmitNodeCollector,
+        bufferSource: MultiBufferSource,
         renderType: RenderType,
         packedLight: Int,
         color: Int = -1,
@@ -77,6 +100,19 @@ object BedrockTextureMeshSupport {
     @Suppress("UNCHECKED_CAST")
     private fun mutableChildren(part: ModelPart): MutableMap<String, ModelPart> =
         childrenField.get(part) as MutableMap<String, ModelPart>
+
+    private fun createPartLookup(root: ModelPart): (String) -> ModelPart? {
+        val partsByName = HashMap<String, ModelPart>()
+        collectParts(root, partsByName)
+        return { name -> partsByName[name] }
+    }
+
+    private fun collectParts(part: ModelPart, partsByName: MutableMap<String, ModelPart>) {
+        mutableChildren(part).forEach { (name, child) ->
+            partsByName[name] = child
+            collectParts(child, partsByName)
+        }
+    }
 
     private fun createTextureMeshPart(
         bone: BedrockBone,
@@ -91,16 +127,13 @@ object BedrockTextureMeshSupport {
         )
 
         val position = resolvePosition(bone, textureMesh, transformMode)
-        val pose = PartPose(
+        val pose = PartPose.offsetAndRotation(
             position.x,
             position.y,
             position.z,
             textureMesh.rotation.x.toModelRadX(),
             textureMesh.rotation.y.toModelRadY(),
             textureMesh.rotation.z.toModelRadZ(),
-            1.0f,
-            1.0f,
-            1.0f,
         )
         part.setInitialPose(pose)
         part.loadPose(pose)
@@ -130,29 +163,25 @@ object BedrockTextureMeshSupport {
         val cubes = ArrayList<ModelPart.Cube>()
 
         cubes += singlePolygonCube(
-            polygon(
-                normalX = 0.0f,
-                normalY = 1.0f,
-                normalZ = 0.0f,
-                vertices = arrayOf(
-                    ModelPart.Vertex(xCoord(mask.width.toFloat()), yCoord(0.0f), zCoord(0.0f), 1.0f, 1.0f),
-                    ModelPart.Vertex(xCoord(mask.width.toFloat()), yCoord(0.0f), zCoord(mask.height.toFloat()), 1.0f, 0.0f),
-                    ModelPart.Vertex(xCoord(0.0f), yCoord(0.0f), zCoord(mask.height.toFloat()), 0.0f, 0.0f),
-                    ModelPart.Vertex(xCoord(0.0f), yCoord(0.0f), zCoord(0.0f), 0.0f, 1.0f),
-                ),
+            normalX = 0.0f,
+            normalY = 1.0f,
+            normalZ = 0.0f,
+            vertices = arrayOf(
+                vertex(xCoord(mask.width.toFloat()), yCoord(0.0f), zCoord(0.0f), 1.0f, 1.0f),
+                vertex(xCoord(mask.width.toFloat()), yCoord(0.0f), zCoord(mask.height.toFloat()), 1.0f, 0.0f),
+                vertex(xCoord(0.0f), yCoord(0.0f), zCoord(mask.height.toFloat()), 0.0f, 0.0f),
+                vertex(xCoord(0.0f), yCoord(0.0f), zCoord(0.0f), 0.0f, 1.0f),
             ),
         )
         cubes += singlePolygonCube(
-            polygon(
-                normalX = 0.0f,
-                normalY = -1.0f,
-                normalZ = 0.0f,
-                vertices = arrayOf(
-                    ModelPart.Vertex(xCoord(mask.width.toFloat()), yCoord(-1.0f), zCoord(0.0f), 1.0f, 1.0f),
-                    ModelPart.Vertex(xCoord(0.0f), yCoord(-1.0f), zCoord(0.0f), 0.0f, 1.0f),
-                    ModelPart.Vertex(xCoord(0.0f), yCoord(-1.0f), zCoord(mask.height.toFloat()), 0.0f, 0.0f),
-                    ModelPart.Vertex(xCoord(mask.width.toFloat()), yCoord(-1.0f), zCoord(mask.height.toFloat()), 1.0f, 0.0f),
-                ),
+            normalX = 0.0f,
+            normalY = -1.0f,
+            normalZ = 0.0f,
+            vertices = arrayOf(
+                vertex(xCoord(mask.width.toFloat()), yCoord(-1.0f), zCoord(0.0f), 1.0f, 1.0f),
+                vertex(xCoord(0.0f), yCoord(-1.0f), zCoord(0.0f), 0.0f, 1.0f),
+                vertex(xCoord(0.0f), yCoord(-1.0f), zCoord(mask.height.toFloat()), 0.0f, 0.0f),
+                vertex(xCoord(mask.width.toFloat()), yCoord(-1.0f), zCoord(mask.height.toFloat()), 1.0f, 0.0f),
             ),
         )
 
@@ -230,29 +259,29 @@ object BedrockTextureMeshSupport {
             Vector3f(0.0f, 0.0f, -dir.toFloat())
         }
 
-        val baseVertices = arrayOf(
-            ModelPart.Vertex(
+        val baseVertices: Array<Any> = arrayOf(
+            vertex(
                 xCoord(sx),
                 yCoord(0.0f),
                 zCoord(sy),
                 clampUv(uvEx / mask.width.toFloat()),
                 clampUv(1.0f - (uvSy / mask.height.toFloat())),
             ),
-            ModelPart.Vertex(
+            vertex(
                 xCoord(sx),
                 yCoord(-1.0f),
                 zCoord(sy),
                 clampUv(uvEx / mask.width.toFloat()),
                 clampUv(1.0f - (uvEy / mask.height.toFloat())),
             ),
-            ModelPart.Vertex(
+            vertex(
                 xCoord(ex),
                 yCoord(-1.0f),
                 zCoord(ey),
                 clampUv(uvSx / mask.width.toFloat()),
                 clampUv(1.0f - (uvEy / mask.height.toFloat())),
             ),
-            ModelPart.Vertex(
+            vertex(
                 xCoord(ex),
                 yCoord(0.0f),
                 zCoord(ey),
@@ -261,14 +290,14 @@ object BedrockTextureMeshSupport {
             ),
         )
 
-        val orderedVertices = when {
+        val orderedVertices: Array<Any> = when {
             isVerticalBoundary && dir == 1 -> baseVertices
             isVerticalBoundary -> arrayOf(baseVertices[0], baseVertices[3], baseVertices[2], baseVertices[1])
             dir == -1 -> baseVertices
             else -> arrayOf(baseVertices[0], baseVertices[3], baseVertices[2], baseVertices[1])
         }
 
-        return singlePolygonCube(ModelPart.Polygon(orderedVertices, normal))
+        return singlePolygonCube(normal.x, normal.y, normal.z, orderedVertices)
     }
 
     private fun clampUv(value: Float): Float = value.coerceIn(0.0f, 1.0f)
@@ -288,15 +317,19 @@ object BedrockTextureMeshSupport {
         )
     }
 
-    private fun polygon(
+    @Suppress("UNCHECKED_CAST")
+    private fun singlePolygonCube(
         normalX: Float,
         normalY: Float,
         normalZ: Float,
-        vertices: Array<ModelPart.Vertex>,
-    ): ModelPart.Polygon = ModelPart.Polygon(vertices, Vector3f(normalX, normalY, normalZ))
-
-    private fun singlePolygonCube(polygon: ModelPart.Polygon): ModelPart.Cube =
-        ModelPart.Cube(
+        vertices: Array<Any>,
+    ): ModelPart.Cube {
+        // Build a degenerate Cube whose NORTH polygon we overwrite via reflection,
+        // since ModelPart.Polygon and ModelPart.Vertex are package-private in 1.21.1.
+        // The NORTH face yields exactly one Polygon with 4 Vertex slots, matching our
+        // caller-supplied vertices. We mutate the existing array in place because
+        // Field.set rejects an Object[] on a Vertex[] field.
+        val cube = ModelPart.Cube(
             0,
             0,
             0.0f,
@@ -312,16 +345,24 @@ object BedrockTextureMeshSupport {
             1.0f,
             1.0f,
             setOf(net.minecraft.core.Direction.NORTH),
-        ).also { cube ->
-            cube.polygons[0] = polygon
+        )
+        val polygons = polygonsField.get(cube) as Array<Any>
+        val polygon = polygons[0]
+        val existingVertices = polygonVerticesField.get(polygon) as Array<Any?>
+        val copyCount = minOf(vertices.size, existingVertices.size)
+        for (i in 0 until copyCount) {
+            existingVertices[i] = vertices[i]
         }
+        polygonNormalField.set(polygon, Vector3f(normalX, normalY, normalZ))
+        return cube
+    }
 
-    private fun textureMask(textureId: Identifier): TextureMask =
+    private fun textureMask(textureId: ResourceLocation): TextureMask =
         textureMaskCache.computeIfAbsent(textureId) {
             openTexture(it)?.use(::readTextureMask) ?: TextureMask.full(64, 64)
         }
 
-    private fun openTexture(textureId: Identifier): InputStream? {
+    private fun openTexture(textureId: ResourceLocation): InputStream? {
         val resourceManager = runCatching { Minecraft.getInstance().resourceManager }.getOrNull()
         val resource = resourceManager?.getResource(textureId)?.orElse(null)
         if (resource != null) {

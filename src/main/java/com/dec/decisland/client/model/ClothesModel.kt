@@ -11,22 +11,19 @@ import net.minecraft.client.model.geom.PartPose
 import net.minecraft.client.model.geom.builders.CubeListBuilder
 import net.minecraft.client.model.geom.builders.LayerDefinition
 import net.minecraft.client.model.geom.builders.MeshDefinition
-import net.minecraft.client.renderer.entity.state.HumanoidRenderState
-import net.minecraft.resources.Identifier
+import net.minecraft.resources.ResourceLocation
+import net.minecraft.world.entity.LivingEntity
 import kotlin.math.PI
 
-class ClothesModel<T : HumanoidRenderState>(root: ModelPart) : HumanoidModel<T>(root) {
-    override fun setupAnim(state: T) {
-        super.setupAnim(state)
-    }
+class ClothesModel<T : LivingEntity>(root: ModelPart) : HumanoidModel<T>(root) {
 
     companion object {
         @JvmField
         val LAYER_LOCATION: ModelLayerLocation =
-            ModelLayerLocation(Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "clothes_model"), "main")
+            ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "clothes_model"), "main")
 
-        private val GEOMETRY_LOCATION: Identifier =
-            Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "bedrock/models/armor/clothes.geometry.json")
+        private val GEOMETRY_LOCATION: ResourceLocation =
+            ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "bedrock/models/armor/clothes.geometry.json")
 
         @JvmStatic
         fun createBodyLayer(): LayerDefinition {

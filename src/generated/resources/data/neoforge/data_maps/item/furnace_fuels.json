@@ -1,0 +1,82 @@
+{
+  "values": {
+    "decisland:coal_fish": {
+      "replace": true,
+      "value": {
+        "burn_time": 8
+      }
+    },
+    "decisland:experience_book": {
+      "replace": true,
+      "value": {
+        "burn_time": 20
+      }
+    },
+    "decisland:experience_book_empty": {
+      "replace": true,
+      "value": {
+        "burn_time": 10
+      }
+    },
+    "decisland:experience_book_pro_empty": {
+      "replace": true,
+      "value": {
+        "burn_time": 10
+      }
+    },
+    "decisland:flare_magic_book": {
+      "replace": true,
+      "value": {
+        "burn_time": 20
+      }
+    },
+    "decisland:hard_bamboo_katana": {
+      "replace": true,
+      "value": {
+        "burn_time": 8
+      }
+    },
+    "decisland:lapis_magic_book": {
+      "replace": true,
+      "value": {
+        "burn_time": 10
+      }
+    },
+    "decisland:old_book": {
+      "replace": true,
+      "value": {
+        "burn_time": 10
+      }
+    },
+    "decisland:snowball_magic_book": {
+      "replace": true,
+      "value": {
+        "burn_time": 10
+      }
+    },
+    "decisland:sticky_ash": {
+      "replace": true,
+      "value": {
+        "burn_time": 20
+      }
+    },
+    "decisland:wave_magic_book": {
+      "replace": true,
+      "value": {
+        "burn_time": 10
+      }
+    },
+    "decisland:wooden_dagger": {
+      "replace": true,
+      "value": {
+        "burn_time": 10
+      }
+    },
+    "decisland:wooden_staff": {
+      "replace": true,
+      "value": {
+        "burn_time": 10
+      }
+    }
+  }
+}

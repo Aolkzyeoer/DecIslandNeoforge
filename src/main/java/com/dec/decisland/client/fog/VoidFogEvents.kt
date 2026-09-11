@@ -3,6 +3,7 @@ package com.dec.decisland.client.fog
 import com.dec.decisland.worldgen.ModDimensions
 import net.minecraft.client.Minecraft
 import net.minecraft.client.multiplayer.ClientLevel
+import net.minecraft.core.BlockPos
 import net.minecraft.world.level.material.FogType
 import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.neoforge.client.event.ViewportEvent
@@ -16,7 +17,7 @@ object VoidFogEvents {
         }
 
         val camera = event.camera
-        val entity = camera.entity() ?: return
+        val entity = camera.entity
         val level = entity.level()
         if (level !is ClientLevel || level.dimension() != ModDimensions.VOID_LEVEL) {
             return
@@ -24,9 +25,9 @@ object VoidFogEvents {
 
         VoidFogConfig.ensureLoaded(Minecraft.getInstance().resourceManager)
 
-        val biomeId = level.getBiome(camera.blockPosition())
+        val biomeId = level.getBiome(BlockPos.containing(camera.position))
             .unwrapKey()
-            .map { it.identifier() }
+            .map { it.location() }
             .orElse(null)
         val global = VoidFogConfig.globalSpec()
         val biome = VoidFogConfig.specFor(biomeId)
@@ -40,7 +41,7 @@ object VoidFogEvents {
     @SubscribeEvent
     fun onComputeFogColor(event: ViewportEvent.ComputeFogColor) {
         val camera = event.camera
-        val entity = camera.entity() ?: return
+        val entity = camera.entity
         val level = entity.level()
         if (level !is ClientLevel || level.dimension() != ModDimensions.VOID_LEVEL) {
             return
@@ -48,9 +49,9 @@ object VoidFogEvents {
 
         VoidFogConfig.ensureLoaded(Minecraft.getInstance().resourceManager)
 
-        val biomeId = level.getBiome(camera.blockPosition())
+        val biomeId = level.getBiome(BlockPos.containing(camera.position))
             .unwrapKey()
-            .map { it.identifier() }
+            .map { it.location() }
             .orElse(null)
         val rgb = VoidFogConfig.tintRgb(event.red, event.green, event.blue, biomeId)
         event.red = rgb[0]

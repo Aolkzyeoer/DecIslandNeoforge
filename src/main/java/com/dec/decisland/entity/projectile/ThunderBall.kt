@@ -5,7 +5,6 @@ import net.minecraft.server.level.ServerLevel
 import net.minecraft.util.RandomSource
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.EntityType
-import net.minecraft.world.entity.EntitySpawnReason
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.Level
@@ -35,7 +34,7 @@ class ThunderBall(entityType: EntityType<ThunderBall>, level: Level) :
             return
         }
 
-        EntityType.LIGHTNING_BOLT.create(serverLevel, EntitySpawnReason.TRIGGERED)?.let { lightning ->
+        EntityType.LIGHTNING_BOLT.create(serverLevel)?.let { lightning ->
             lightning.setPos(pos.x, pos.y, pos.z)
             serverLevel.addFreshEntity(lightning)
         }

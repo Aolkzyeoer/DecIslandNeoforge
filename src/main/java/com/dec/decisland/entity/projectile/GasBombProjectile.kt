@@ -1,12 +1,11 @@
 package com.dec.decisland.entity.projectile
 
 import com.dec.decisland.DecIsland
-import com.dec.decisland.api.CustomInertia
 import com.dec.decisland.effect.ModEffects
 import com.dec.decisland.entity.ModEntities
 import com.dec.decisland.item.category.Weapon
 import com.dec.decisland.network.Networking
-import net.minecraft.resources.Identifier
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.sounds.SoundEvents
 import net.minecraft.sounds.SoundSource
@@ -16,7 +15,6 @@ import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.EntityType
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.player.Player
-import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrowableItemProjectile
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.Level
@@ -26,7 +24,7 @@ import net.minecraft.world.phys.HitResult
 import net.minecraft.world.phys.Vec3
 
 class GasBombProjectile(entityType: EntityType<GasBombProjectile>, level: Level) :
-    ThrowableItemProjectile(entityType, level), CustomInertia {
+    CustomInertiaProjectile(entityType, level) {
     constructor(level: Level, owner: LivingEntity, item: ItemStack) : this(ModEntities.GAS_BOMB.get(), level) {
         setOwner(owner)
         setItem(item.copyWithCount(1))
@@ -71,7 +69,7 @@ class GasBombProjectile(entityType: EntityType<GasBombProjectile>, level: Level)
                 return@forEach
             }
             target.addEffect(MobEffectInstance(MobEffects.POISON, 20 * 10, 0), projectileOwner)
-            target.addEffect(MobEffectInstance(MobEffects.NAUSEA, 20 * 10, 0), projectileOwner)
+            target.addEffect(MobEffectInstance(MobEffects.CONFUSION, 20 * 10, 0), projectileOwner)
             if (target is Player) {
                 target.addEffect(MobEffectInstance(ModEffects.DIZZINESS, 20 * 10, 2), projectileOwner)
             }
@@ -79,8 +77,8 @@ class GasBombProjectile(entityType: EntityType<GasBombProjectile>, level: Level)
     }
 
     companion object {
-        private val HIT_PARTICLE_ID: Identifier =
-            Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "gas_bomb_particle")
+        private val HIT_PARTICLE_ID: ResourceLocation =
+            ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "gas_bomb_particle")
 
         private const val EFFECT_RADIUS: Double = 4.0
     }

@@ -2,7 +2,7 @@ package com.dec.decisland.worldgen
 
 import com.mojang.serialization.Codec
 import com.mojang.serialization.codecs.RecordCodecBuilder
-import net.minecraft.resources.Identifier
+import net.minecraft.resources.ResourceLocation
 
 data class FractalSurfaceSettings(
     val baseHeight: Double,
@@ -20,7 +20,7 @@ data class FractalSurfaceSettings(
     val genDepth: Int,
     val seaLevel: Int,
     val snowLine: Int,
-    val biomeSlopeParams: Map<Identifier, SlopeParams>,
+    val biomeSlopeParams: Map<ResourceLocation, SlopeParams>,
 ) {
     companion object {
         val CODEC: Codec<FractalSurfaceSettings> = RecordCodecBuilder.create { instance ->
@@ -40,7 +40,7 @@ data class FractalSurfaceSettings(
                 Codec.INT.fieldOf("gen_depth").forGetter(FractalSurfaceSettings::genDepth),
                 Codec.INT.fieldOf("sea_level").forGetter(FractalSurfaceSettings::seaLevel),
                 Codec.INT.fieldOf("snow_line").forGetter(FractalSurfaceSettings::snowLine),
-                Codec.unboundedMap(Identifier.CODEC, SlopeParams.CODEC).fieldOf("biome_slope_params").forGetter(FractalSurfaceSettings::biomeSlopeParams),
+                Codec.unboundedMap(ResourceLocation.CODEC, SlopeParams.CODEC).fieldOf("biome_slope_params").forGetter(FractalSurfaceSettings::biomeSlopeParams),
             ).apply(instance, ::FractalSurfaceSettings)
         }
     }

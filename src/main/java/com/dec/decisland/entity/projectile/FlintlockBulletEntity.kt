@@ -1,4 +1,4 @@
-package com.dec.decisland.entity.projectile
+﻿package com.dec.decisland.entity.projectile
 import com.dec.decisland.entity.ModEntities
 import com.dec.decisland.item.category.Weapon
 import com.dec.decisland.network.Networking
@@ -10,7 +10,7 @@ import net.minecraft.world.entity.EntityType
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.animal.allay.Allay
 import net.minecraft.world.entity.player.Player
-import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrowableItemProjectile
+import net.minecraft.world.entity.projectile.ThrowableItemProjectile
 import net.minecraft.world.item.Item
 import net.minecraft.world.level.Level
 import net.minecraft.world.phys.AABB

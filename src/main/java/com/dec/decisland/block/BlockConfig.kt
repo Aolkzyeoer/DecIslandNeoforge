@@ -2,9 +2,12 @@ package com.dec.decisland.block
 
 import com.dec.decisland.DecIsland
 import com.dec.decisland.datagen.ModBlockLootTablesProvider
-import net.minecraft.client.data.models.BlockModelGenerators
+import net.minecraft.data.models.BlockModelGenerators
+import net.minecraft.data.models.model.DelegatedModel
+import net.minecraft.data.models.model.ModelLocationUtils
 import net.minecraft.tags.TagKey
 import net.minecraft.world.item.CreativeModeTab
+import net.minecraft.world.item.Items
 import net.minecraft.world.level.block.Block
 import net.minecraft.world.level.block.state.BlockBehaviour
 import java.util.function.Consumer
@@ -59,6 +62,13 @@ class BlockConfig private constructor(builder: Builder) {
         var blockModelGenerator: Consumer<BlockModelGenerators> = Consumer { blockModels ->
             val block = ModBlocks.getBlockByName("block.${DecIsland.MOD_ID}.$name").value()
             blockModels.createTrivialCube(block)
+            // createTrivialCube 不生成 BlockItem 模型，这里补一个委托物品模型
+            if (block.asItem() != Items.AIR) {
+                blockModels.modelOutput.accept(
+                    ModelLocationUtils.getModelLocation(block.asItem()),
+                    DelegatedModel(ModelLocationUtils.getModelLocation(block)),
+                )
+            }
         }
 
         @JvmField

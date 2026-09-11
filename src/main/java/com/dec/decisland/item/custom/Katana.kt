@@ -2,14 +2,15 @@ package com.dec.decisland.item.custom
 
 import com.dec.decisland.api.ModItemEventTrigger
 import com.dec.decisland.network.Networking
-import net.minecraft.resources.Identifier
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.core.component.DataComponents
 import net.minecraft.nbt.CompoundTag
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.sounds.SoundEvents
 import net.minecraft.util.Mth
+import com.dec.decisland.item.compat.asEquipmentSlot
 import net.minecraft.world.InteractionHand
-import net.minecraft.world.InteractionResult
+import net.minecraft.world.InteractionResultHolder
 import net.minecraft.world.damagesource.DamageSource
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.EquipmentSlot
@@ -66,7 +67,7 @@ abstract class Katana(properties: Properties) : Item(properties), IItemExtension
 
     open fun getAttackSkillBonusDamage(): Float = 0.0f
 
-    override fun use(level: Level, player: Player, hand: InteractionHand): InteractionResult {
+    override fun use(level: Level, player: Player, hand: InteractionHand): InteractionResultHolder<ItemStack> {
         sweepAttack(
             level,
             player,
@@ -79,22 +80,22 @@ abstract class Katana(properties: Properties) : Item(properties), IItemExtension
             { lvl, x, y, z -> useSpawnParticle(lvl, x, y, z) },
             { server, source -> useServer(server, source) },
         )
-        return InteractionResult.SUCCESS
+        return InteractionResultHolder.sidedSuccess(player.getItemInHand(hand), level.isClientSide)
     }
 
-    override fun hurtEnemy(stack: ItemStack, target: LivingEntity, attacker: LivingEntity) {
+    override fun hurtEnemy(stack: ItemStack, target: LivingEntity, attacker: LivingEntity): Boolean {
         val customData = stack.get(DataComponents.CUSTOM_DATA)
         val tag = customData?.copyTag() ?: CompoundTag()
         val currentTime = System.currentTimeMillis()
 
         val shouldReset = if (tag.contains(LAST_ATTACK_TIME_KEY)) {
-            currentTime - tag.getLong(LAST_ATTACK_TIME_KEY).get() > getResetTimeMs()
+            currentTime - tag.getLong(LAST_ATTACK_TIME_KEY) > getResetTimeMs()
         } else {
             false
         }
 
         var attackCount = if (shouldReset) 0 else if (tag.contains(ATTACK_COUNTER_KEY)) {
-            tag.getInt(ATTACK_COUNTER_KEY).get()
+            tag.getInt(ATTACK_COUNTER_KEY)
         } else {
             0
         }
@@ -105,7 +106,7 @@ abstract class Katana(properties: Properties) : Item(properties), IItemExtension
         stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag))
 
         if (!onAttackTriggerSweep(stack)) {
-            return
+            return true
         }
 
         val hand = if (attacker is Player) attacker.usedItemHand else null
@@ -125,6 +126,7 @@ abstract class Katana(properties: Properties) : Item(properties), IItemExtension
         if (attackCount >= getMaxAttackCount()) {
             stack.set(DataComponents.CUSTOM_DATA, CustomData.EMPTY)
         }
+        return true
     }
 
     fun sweepAttack(
@@ -189,7 +191,7 @@ abstract class Katana(properties: Properties) : Item(properties), IItemExtension
                         damageSource = level.damageSources().playerAttack(source)
                     }
 
-                    if (livingEntity.hurtServer(level, damageSource, finalDamage)) {
+                    if (livingEntity.hurt(damageSource, finalDamage)) {
                         hitCount++
                         val radians = Math.toRadians(source.yRot.toDouble())
                         livingEntity.knockback(
@@ -216,7 +218,7 @@ abstract class Katana(properties: Properties) : Item(properties), IItemExtension
 
     protected fun sendBedrockKatanaEmitter(
         serverLevel: ServerLevel,
-        particleId: Identifier,
+        particleId: ResourceLocation,
         x: Double,
         y: Double,
         z: Double,
@@ -236,7 +238,7 @@ abstract class Katana(properties: Properties) : Item(properties), IItemExtension
         entity: Entity,
         slot: EquipmentSlot?,
         amount: Double,
-        modifierId: Identifier,
+        modifierId: ResourceLocation,
     ) {
         val player = entity as? Player ?: return
         if (slot != EquipmentSlot.MAINHAND && slot != EquipmentSlot.OFFHAND) {
@@ -266,7 +268,7 @@ abstract class Katana(properties: Properties) : Item(properties), IItemExtension
         )
     }
 
-    protected fun removeMovementSpeedModifier(player: Player, modifierId: Identifier) {
+    protected fun removeMovementSpeedModifier(player: Player, modifierId: ResourceLocation) {
         val attribute = player.getAttribute(Attributes.MOVEMENT_SPEED) ?: return
         if (attribute.getModifier(modifierId) != null) {
             attribute.removeModifier(modifierId)

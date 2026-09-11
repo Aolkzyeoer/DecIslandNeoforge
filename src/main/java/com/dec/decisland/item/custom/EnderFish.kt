@@ -20,8 +20,8 @@ class EnderFish(properties: Properties) : Item(properties) {
             val targetX = livingEntity.x + ((livingEntity.random.nextDouble() - 0.5) * HORIZONTAL_RANGE * 2.0)
             val targetY = Mth.clamp(
                 livingEntity.y + ((livingEntity.random.nextDouble() - 0.5) * VERTICAL_RANGE * 2.0),
-                serverLevel.minY.toDouble(),
-                (serverLevel.maxY - 1).toDouble(),
+                serverLevel.minBuildHeight.toDouble(),
+                (serverLevel.maxBuildHeight - 1).toDouble(),
             )
             val targetZ = livingEntity.z + ((livingEntity.random.nextDouble() - 0.5) * HORIZONTAL_RANGE * 2.0)
             if (livingEntity.randomTeleport(targetX, targetY, targetZ, true)) {
@@ -41,7 +41,7 @@ class EnderFish(properties: Properties) : Item(properties) {
         }
 
         if (teleported && livingEntity is Player) {
-            livingEntity.cooldowns.addCooldown(stack, COOLDOWN_TICKS)
+            livingEntity.cooldowns.addCooldown(stack.item, COOLDOWN_TICKS)
         }
 
         return result

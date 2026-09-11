@@ -3,7 +3,6 @@ amethyst_axe
 amethyst_dagger
 amethyst_pickaxe
 blast_furnace_copper_battleaxe
-blast_furnace_copper_dagger
 blast_furnace_diamond_axe
 blast_furnace_diamond_dagger
 blast_furnace_diamond_pickaxe
@@ -29,7 +28,6 @@ everlasting_winter_sword
 flintlock_bullet
 frozen_power
 furnace_copper_battleaxe
-furnace_copper_dagger
 furnace_diamond_axe
 furnace_diamond_dagger
 furnace_diamond_pickaxe

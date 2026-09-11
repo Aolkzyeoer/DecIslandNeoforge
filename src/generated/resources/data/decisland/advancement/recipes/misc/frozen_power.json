@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_frozen_power_debris": {
+      "conditions": {
+        "items": [
+          {
+            "items": "decisland:frozen_power_debris"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "decisland:frozen_power"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_frozen_power_debris"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "decisland:frozen_power"
+    ]
+  }
+}

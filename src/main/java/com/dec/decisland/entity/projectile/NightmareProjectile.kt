@@ -1,9 +1,9 @@
-package com.dec.decisland.entity.projectile
+﻿package com.dec.decisland.entity.projectile
 
 import com.dec.decisland.block.ModBlocks
 import com.dec.decisland.network.Networking
 import net.minecraft.core.particles.ParticleTypes
-import net.minecraft.resources.Identifier
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.sounds.SoundEvents
 import net.minecraft.sounds.SoundSource
@@ -27,8 +27,8 @@ abstract class NightmareProjectile(entityType: EntityType<out NightmareProjectil
     protected abstract val airInertia: Double
     protected abstract val waterInertia: Double
     protected abstract val blockExtent: Double
-    protected abstract val trailParticleId: Identifier
-    protected abstract val spawnParticleId: Identifier
+    protected abstract val trailParticleId: ResourceLocation
+    protected abstract val spawnParticleId: ResourceLocation
 
     override fun getDefaultGravity(): Double = 0.0
 
@@ -75,7 +75,7 @@ abstract class NightmareProjectile(entityType: EntityType<out NightmareProjectil
         val projectileOwner = getOwner()
         val currentLevel = level()
         if (projectileOwner is LivingEntity && currentLevel is ServerLevel) {
-            result.entity.hurtServer(currentLevel, damageSources().spit(this, projectileOwner), baseDamage)
+            result.entity.hurt(damageSources().spit(this, projectileOwner), baseDamage)
         }
         explodeAt(result.location)
     }

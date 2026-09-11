@@ -1,13 +1,13 @@
 package com.dec.decisland.item.custom
 
 import com.dec.decisland.entity.projectile.BlizzardEnergy
+import com.dec.decisland.item.compat.ModProjectileUtil
 import com.dec.decisland.mana.ManaManager
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.sounds.SoundEvent
 import net.minecraft.sounds.SoundEvents
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.player.Player
-import net.minecraft.world.entity.projectile.Projectile
 import net.minecraft.world.item.ItemStack
 
 class BlizzardStaff(properties: Properties) : BedrockProjectileStaff(properties) {
@@ -22,7 +22,7 @@ class BlizzardStaff(properties: Properties) : BedrockProjectileStaff(properties)
 
         val view = source.getViewVector(0.0f)
         repeat(PROJECTILE_COUNT) {
-            Projectile.spawnProjectileUsingShoot(
+            ModProjectileUtil.spawnUsingShoot(
                 ::BlizzardEnergy,
                 serverLevel,
                 stack,

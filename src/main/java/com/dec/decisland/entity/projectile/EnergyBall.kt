@@ -1,7 +1,7 @@
 package com.dec.decisland.entity.projectile
 
 import com.dec.decisland.entity.ModEntities
-import net.minecraft.resources.Identifier
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.EntityType
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.item.ItemStack
@@ -23,6 +23,6 @@ class EnergyBall(entityType: EntityType<EnergyBall>, level: Level) :
     override val waterInertia: Double = 1.0
     override val trailDurationTicks: Int = 6
     override val hitParticleDurationTicks: Int = 8
-    override val hitParticleIds: List<Identifier> =
-        super.hitParticleIds + Identifier.fromNamespaceAndPath("decisland", "shulker_bullet_hit_small_particle")
+    override val hitParticleIds: List<ResourceLocation> =
+        super.hitParticleIds + ResourceLocation.fromNamespaceAndPath("decisland", "shulker_bullet_hit_small_particle")
 }

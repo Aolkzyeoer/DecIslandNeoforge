@@ -3,18 +3,18 @@ package com.dec.decisland.item.custom
 import com.dec.decisland.DecIsland
 import com.dec.decisland.entity.projectile.SpotsByBook
 import com.dec.decisland.entity.projectile.SpotsOverflow
+import com.dec.decisland.item.compat.asEquipmentSlot
 import com.dec.decisland.mana.ManaManager
 import com.dec.decisland.network.Networking
 import net.minecraft.core.component.DataComponents
 import net.minecraft.nbt.CompoundTag
-import net.minecraft.resources.Identifier
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.sounds.SoundEvents
 import net.minecraft.sounds.SoundSource
 import net.minecraft.world.InteractionHand
-import net.minecraft.world.InteractionResult
+import net.minecraft.world.InteractionResultHolder
 import net.minecraft.world.entity.Entity
-import net.minecraft.world.entity.EquipmentSlot
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.entity.projectile.Projectile
@@ -26,13 +26,13 @@ class FlareMagicBook(properties: Properties) : MagicWeapon(properties) {
     override fun shouldCauseReequipAnimation(oldStack: ItemStack, newStack: ItemStack, slotChanged: Boolean): Boolean =
         slotChanged || !newStack.`is`(oldStack.item)
 
-    override fun use(level: Level, player: Player, hand: InteractionHand): InteractionResult {
+    override fun use(level: Level, player: Player, hand: InteractionHand): InteractionResultHolder<ItemStack> {
         val stack = player.getItemInHand(hand)
         if (level.isClientSide) {
-            return if (shouldAnimateMainProjectile(player, stack)) InteractionResult.CONSUME else InteractionResult.PASS
+            return if (shouldAnimateMainProjectile(player, stack)) InteractionResultHolder.consume(stack) else InteractionResultHolder.pass(stack)
         }
 
-        val serverLevel = level as? ServerLevel ?: return InteractionResult.PASS
+        val serverLevel = level as? ServerLevel ?: return InteractionResultHolder.pass(stack)
         var skillCount = getSkillCount(stack)
         val shouldAnimateMainProjectile = shouldAnimateMainProjectile(player, stack)
         var firedMainProjectile = false
@@ -63,22 +63,23 @@ class FlareMagicBook(properties: Properties) : MagicWeapon(properties) {
         }
 
         setSkillCount(stack, skillCount)
-        return if (shouldAnimateMainProjectile && firedMainProjectile) InteractionResult.SUCCESS_SERVER else InteractionResult.CONSUME
+        return if (shouldAnimateMainProjectile && firedMainProjectile) InteractionResultHolder.success(stack) else InteractionResultHolder.consume(stack)
     }
 
-    override fun inventoryTick(stack: ItemStack, level: ServerLevel, entity: Entity, slot: EquipmentSlot?) {
-        super.inventoryTick(stack, level, entity, slot)
+    override fun inventoryTick(stack: ItemStack, level: Level, entity: Entity, slotId: Int, isSelected: Boolean) {
+        super.inventoryTick(stack, level, entity, slotId, isSelected)
+        val level1 = level as? ServerLevel ?: return
         val player = entity as? Player ?: return
         val pendingShots = getPendingOverflowShots(stack)
-        if (pendingShots <= 0 || level.gameTime < getNextOverflowShotTime(stack)) {
+        if (pendingShots <= 0 || level1.gameTime < getNextOverflowShotTime(stack)) {
             return
         }
 
-        spawnProjectile(level, player, stack, ::SpotsOverflow, 0.7f, 30.0f)
+        spawnProjectile(level1, player, stack, ::SpotsOverflow, 0.7f, 30.0f)
         if (pendingShots == 1) {
             clearPendingOverflowShots(stack)
         } else {
-            setPendingOverflowShots(stack, pendingShots - 1, level.gameTime + OVERFLOW_DELAY_TICKS)
+            setPendingOverflowShots(stack, pendingShots - 1, level1.gameTime + OVERFLOW_DELAY_TICKS)
         }
     }
 
@@ -129,16 +130,12 @@ class FlareMagicBook(properties: Properties) : MagicWeapon(properties) {
     ): Boolean {
         val projectile = projectileFactory(serverLevel, source, stack)
         projectile.shootFromRotation(source, source.xRot, source.yRot, 0.0f, velocity, inaccuracy)
-        val added = serverLevel.addFreshEntity(projectile)
-        if (added) {
-            projectile.applyOnProjectileSpawned(serverLevel, stack)
-        }
-        return added
+        return serverLevel.addFreshEntity(projectile)
     }
 
     private fun getSkillCount(stack: ItemStack): Int {
         val tag = readTag(stack)
-        return if (tag.contains(SKILL_COUNT_KEY)) tag.getInt(SKILL_COUNT_KEY).get() else 0
+        return if (tag.contains(SKILL_COUNT_KEY)) tag.getInt(SKILL_COUNT_KEY) else 0
     }
 
     private fun setSkillCount(stack: ItemStack, value: Int) {
@@ -149,12 +146,12 @@ class FlareMagicBook(properties: Properties) : MagicWeapon(properties) {
 
     private fun getPendingOverflowShots(stack: ItemStack): Int {
         val tag = readTag(stack)
-        return if (tag.contains(PENDING_OVERFLOW_SHOTS_KEY)) tag.getInt(PENDING_OVERFLOW_SHOTS_KEY).get() else 0
+        return if (tag.contains(PENDING_OVERFLOW_SHOTS_KEY)) tag.getInt(PENDING_OVERFLOW_SHOTS_KEY) else 0
     }
 
     private fun getNextOverflowShotTime(stack: ItemStack): Long {
         val tag = readTag(stack)
-        return if (tag.contains(NEXT_OVERFLOW_SHOT_TIME_KEY)) tag.getLong(NEXT_OVERFLOW_SHOT_TIME_KEY).get() else 0L
+        return if (tag.contains(NEXT_OVERFLOW_SHOT_TIME_KEY)) tag.getLong(NEXT_OVERFLOW_SHOT_TIME_KEY) else 0L
     }
 
     private fun setPendingOverflowShots(stack: ItemStack, count: Int, nextShotTime: Long) {
@@ -195,7 +192,7 @@ class FlareMagicBook(properties: Properties) : MagicWeapon(properties) {
         private const val PENDING_OVERFLOW_SHOTS_KEY: String = "FlarePendingOverflowShots"
         private const val NEXT_OVERFLOW_SHOT_TIME_KEY: String = "FlareNextOverflowShotTime"
 
-        private val FIRE_POWERING_PARTICLE_ID: Identifier =
-            Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "fire_powering_particle")
+        private val FIRE_POWERING_PARTICLE_ID: ResourceLocation =
+            ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "fire_powering_particle")
     }
 }

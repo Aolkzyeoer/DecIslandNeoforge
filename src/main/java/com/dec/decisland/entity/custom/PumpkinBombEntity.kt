@@ -6,9 +6,8 @@ import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.damagesource.DamageSource
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.EntityType
+import net.minecraft.nbt.CompoundTag
 import net.minecraft.world.level.Level
-import net.minecraft.world.level.storage.ValueInput
-import net.minecraft.world.level.storage.ValueOutput
 
 class PumpkinBombEntity(entityType: EntityType<PumpkinBombEntity>, level: Level) : Entity(entityType, level) {
     private var fuse = DEFAULT_FUSE
@@ -20,12 +19,12 @@ class PumpkinBombEntity(entityType: EntityType<PumpkinBombEntity>, level: Level)
     override fun defineSynchedData(builder: SynchedEntityData.Builder) {
     }
 
-    override fun readAdditionalSaveData(input: ValueInput) {
-        fuse = input.getIntOr(FUSE_KEY, DEFAULT_FUSE)
+    override fun readAdditionalSaveData(compound: CompoundTag) {
+        fuse = if (compound.contains(FUSE_KEY)) compound.getInt(FUSE_KEY) else DEFAULT_FUSE
     }
 
-    override fun addAdditionalSaveData(output: ValueOutput) {
-        output.putInt(FUSE_KEY, fuse)
+    override fun addAdditionalSaveData(compound: CompoundTag) {
+        compound.putInt(FUSE_KEY, fuse)
     }
 
     override fun isPushable(): Boolean = true
@@ -42,7 +41,7 @@ class PumpkinBombEntity(entityType: EntityType<PumpkinBombEntity>, level: Level)
         }
     }
 
-    override fun hurtServer(level: ServerLevel, source: DamageSource, amount: Float): Boolean {
+    override fun hurt(source: DamageSource, amount: Float): Boolean {
         if (amount >= 1.0f) {
             discard()
             return true

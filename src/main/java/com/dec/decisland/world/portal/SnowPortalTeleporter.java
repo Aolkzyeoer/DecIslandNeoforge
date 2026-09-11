@@ -4,23 +4,22 @@ import com.dec.decisland.worldgen.ModDimensions;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.Relative;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.levelgen.Heightmap;
-import net.minecraft.world.level.portal.TeleportTransition;
+import net.minecraft.world.level.portal.DimensionTransition;
 import net.minecraft.world.phys.Vec3;
-import org.jspecify.annotations.Nullable;
 
 public final class SnowPortalTeleporter {
     private SnowPortalTeleporter() {}
 
-    public static @Nullable TeleportTransition createTransition(ServerLevel sourceLevel, Entity entity, BlockPos portalPos, Direction.Axis sourceAxis) {
+    public static @Nullable DimensionTransition createTransition(ServerLevel sourceLevel, Entity entity, BlockPos portalPos, Direction.Axis sourceAxis) {
         ServerLevel destination = sourceLevel.dimension().equals(ModDimensions.VOID_LEVEL) ? sourceLevel.getServer().getLevel(Level.OVERWORLD) : sourceLevel.getServer().getLevel(ModDimensions.VOID_LEVEL);
         if (destination == null) {
             return null;
@@ -46,15 +45,13 @@ public final class SnowPortalTeleporter {
         if (sourceAxis != Direction.Axis.Y && shape.axis() != Direction.Axis.Y && sourceAxis != shape.axis()) {
             yaw += 90.0F;
         }
-        Set<Relative> relatives = Relative.DELTA;
-        return new TeleportTransition(
+        return new DimensionTransition(
             destination,
             teleportPos,
             entity.getDeltaMovement(),
             yaw,
             entity.getXRot(),
-            relatives,
-            TeleportTransition.PLAY_PORTAL_SOUND.then(e -> e.placePortalTicket(shape.lowerCorner()))
+            DimensionTransition.PLAY_PORTAL_SOUND.then(e -> e.placePortalTicket(shape.lowerCorner()))
         );
     }
 
@@ -65,7 +62,7 @@ public final class SnowPortalTeleporter {
         int radius = 32;
         for (int x = center.getX() - radius; x <= center.getX() + radius; x++) {
             for (int z = center.getZ() - radius; z <= center.getZ() + radius; z++) {
-                for (int y = level.getMaxY(); y >= level.getMinY(); y--) {
+                for (int y = level.getMaxBuildHeight(); y >= level.getMinBuildHeight(); y--) {
                     BlockPos pos = new BlockPos(x, y, z);
                     if (!level.getBlockState(pos).is(com.dec.decisland.block.ModBlocks.SNOW_PORTAL.get())) {
                         continue;
@@ -99,7 +96,7 @@ public final class SnowPortalTeleporter {
                     int x = center.getX() + dx;
                     int z = center.getZ() + dz;
                     int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
-                    y = Mth.clamp(y, level.getMinY() + 2, level.getMaxY() - 4);
+                    y = Mth.clamp(y, level.getMinBuildHeight() + 2, level.getMaxBuildHeight() - 4);
                     BlockPos lowerCorner = new BlockPos(x, y, z);
                     Optional<SnowPortalShape> created = SnowPortalShape.createMinimalPortal(level, lowerCorner, axis);
                     if (created.isPresent()) {

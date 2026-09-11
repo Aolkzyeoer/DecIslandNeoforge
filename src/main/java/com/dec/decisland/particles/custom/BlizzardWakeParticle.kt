@@ -4,14 +4,13 @@ import net.minecraft.client.multiplayer.ClientLevel
 import net.minecraft.client.particle.Particle
 import net.minecraft.client.particle.ParticleProvider
 import net.minecraft.client.particle.ParticleRenderType
-import net.minecraft.client.particle.SingleQuadParticle
 import net.minecraft.client.particle.SpriteSet
+import net.minecraft.client.particle.TextureSheetParticle
 import net.minecraft.core.particles.SimpleParticleType
-import net.minecraft.util.RandomSource
 import kotlin.math.max
 
 class BlizzardWakeParticle(level: ClientLevel, x: Double, y: Double, z: Double, private val sprites: SpriteSet) :
-    SingleQuadParticle(level, x, y, z, sprites.get(0, 1)) {
+    TextureSheetParticle(level, x, y, z) {
     private val initialSize: Float
 
     init {
@@ -30,11 +29,9 @@ class BlizzardWakeParticle(level: ClientLevel, x: Double, y: Double, z: Double, 
         quadSize = max(0.0f, initialSize - ageSec * 0.05f)
     }
 
-    override fun getLayer(): Layer = Layer.OPAQUE
+    override fun getRenderType(): ParticleRenderType = ParticleRenderType.PARTICLE_SHEET_OPAQUE
 
     override fun getFacingCameraMode(): FacingCameraMode = FacingCameraMode.LOOKAT_XYZ
-
-    override fun getGroup(): ParticleRenderType = ParticleRenderType.SINGLE_QUADS
 
     class Provider(private val sprite: SpriteSet) : ParticleProvider<SimpleParticleType> {
         override fun createParticle(
@@ -46,7 +43,6 @@ class BlizzardWakeParticle(level: ClientLevel, x: Double, y: Double, z: Double, 
             xSpeed: Double,
             ySpeed: Double,
             zSpeed: Double,
-            random: RandomSource,
         ): Particle = BlizzardWakeParticle(level, x, y, z, sprite)
     }
 }

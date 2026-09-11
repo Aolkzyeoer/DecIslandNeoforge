@@ -18,7 +18,7 @@ sealed class RecipeIngredient {
     data class TagValue(
         val tag: TagKey<Item>,
     ) : RecipeIngredient() {
-        override fun toIngredient(items: HolderGetter<Item>): Ingredient = Ingredient.of(items.getOrThrow(tag))
+        override fun toIngredient(items: HolderGetter<Item>): Ingredient = Ingredient.of(tag)
     }
 
     data class CustomValue(

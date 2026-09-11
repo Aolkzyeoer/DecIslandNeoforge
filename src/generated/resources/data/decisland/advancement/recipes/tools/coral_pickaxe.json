@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_coral_ingot": {
+      "conditions": {
+        "items": [
+          {
+            "items": "decisland:coral_ingot"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "decisland:coral_pickaxe"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_coral_ingot"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "decisland:coral_pickaxe"
+    ]
+  }
+}

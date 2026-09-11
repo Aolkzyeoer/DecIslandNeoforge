@@ -8,14 +8,21 @@ import com.dec.decisland.particles.bedrock.BedrockTintColor
 import com.dec.decisland.particles.bedrock.ColorStop
 import com.dec.decisland.particles.bedrock.Molang
 import com.dec.decisland.particles.bedrock.MolangContext
+import com.mojang.blaze3d.systems.RenderSystem
+import com.mojang.blaze3d.vertex.BufferBuilder
+import com.mojang.blaze3d.vertex.DefaultVertexFormat
+import com.mojang.blaze3d.vertex.Tesselator
+import com.mojang.blaze3d.vertex.VertexFormat
 import net.minecraft.client.multiplayer.ClientLevel
+import net.minecraft.client.particle.ParticleRenderType
 import net.minecraft.client.particle.SingleQuadParticle
-import net.minecraft.client.renderer.RenderPipelines
+import net.minecraft.client.particle.TextureSheetParticle
 import net.minecraft.client.renderer.texture.TextureAtlas
 import net.minecraft.client.renderer.texture.TextureAtlasSprite
+import net.minecraft.client.renderer.texture.TextureManager
 import net.minecraft.core.particles.SimpleParticleType
 import net.minecraft.core.registries.BuiltInRegistries
-import net.minecraft.resources.Identifier
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.phys.Vec3
 import kotlin.math.PI
 import kotlin.math.abs
@@ -38,10 +45,23 @@ class BedrockBillboardParticle(
     private val emitterRandom2: Double = Math.random(),
     private val emitterRandom3: Double = Math.random(),
     private val emitterRandom4: Double = Math.random(),
-) : SingleQuadParticle(level, x, y, z, sprite), EmitterBoundParticle {
+) : TextureSheetParticle(level, x, y, z), EmitterBoundParticle {
     companion object {
         // Bedrock `particles_add` behaves closer to an emissive overlay than a lit translucent quad.
-        private val ADDITIVE_PARTICLE_LAYER = Layer(true, TextureAtlas.LOCATION_PARTICLES, RenderPipelines.TRANSLUCENT_PARTICLE)
+        private val ADDITIVE_PARTICLE_RENDER_TYPE = object : ParticleRenderType {
+            override fun begin(tesselator: Tesselator, textureManager: TextureManager): BufferBuilder {
+                RenderSystem.depthMask(true)
+                RenderSystem.setShaderTexture(0, TextureAtlas.LOCATION_PARTICLES)
+                RenderSystem.enableBlend()
+                RenderSystem.blendFunc(
+                    com.mojang.blaze3d.platform.GlStateManager.SourceFactor.SRC_ALPHA,
+                    com.mojang.blaze3d.platform.GlStateManager.DestFactor.ONE,
+                )
+                return tesselator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.PARTICLE)
+            }
+
+            override fun toString(): String = "decisland_particles_add"
+        }
     }
 
     private var emitterOrigin = Vec3(x, y, z)
@@ -157,16 +177,16 @@ class BedrockBillboardParticle(
         applySize()
     }
 
-    override fun getFacingCameraMode(): FacingCameraMode =
+    override fun getFacingCameraMode(): SingleQuadParticle.FacingCameraMode =
         when (definition.particleAppearanceBillboard?.facingCameraMode?.lowercase()) {
-            "lookat_y", "rotate_y" -> FacingCameraMode.LOOKAT_Y
-            else -> FacingCameraMode.LOOKAT_XYZ
+            "lookat_y", "rotate_y" -> SingleQuadParticle.FacingCameraMode.LOOKAT_Y
+            else -> SingleQuadParticle.FacingCameraMode.LOOKAT_XYZ
         }
 
-    override fun getLayer(): Layer =
+    override fun getRenderType(): ParticleRenderType =
         when (definition.renderMaterial?.lowercase()) {
-            "particles_add" -> ADDITIVE_PARTICLE_LAYER
-            else -> Layer.TRANSLUCENT
+            "particles_add" -> ADDITIVE_PARTICLE_RENDER_TYPE
+            else -> ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT
         }
 
     override fun getLightColor(partialTick: Float): Int {
@@ -238,13 +258,13 @@ class BedrockBillboardParticle(
             return
         }
 
-        val effectId = Identifier.tryParse(particleEffect.effect ?: return) ?: return
+        val effectId = ResourceLocation.tryParse(particleEffect.effect ?: return) ?: return
         if (ModParticles.resolveBedrockDefinition(effectId) != null && ModParticles.resolveBedrockSpriteId(effectId) != null) {
             BedrockEmitterManager.spawnAt(effectId, Vec3(x, y, z), 2)
             return
         }
 
-        val particleType = BuiltInRegistries.PARTICLE_TYPE.getValue(effectId)
+        val particleType = BuiltInRegistries.PARTICLE_TYPE.get(effectId)
         if (particleType is SimpleParticleType) {
             level.addParticle(particleType, x, y, z, 0.0, 0.0, 0.0)
         }

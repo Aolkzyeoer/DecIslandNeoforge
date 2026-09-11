@@ -9,7 +9,7 @@ import net.minecraft.sounds.SoundEvents
 import net.minecraft.sounds.SoundSource
 import net.minecraft.stats.Stats
 import net.minecraft.world.InteractionHand
-import net.minecraft.world.InteractionResult
+import net.minecraft.world.InteractionResultHolder
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.entity.projectile.Projectile
 import net.minecraft.world.item.Item
@@ -18,7 +18,7 @@ import net.minecraft.world.item.ProjectileItem
 import net.minecraft.world.level.Level
 
 class GasBomb(props: Item.Properties) : Item(props), ProjectileItem {
-    override fun use(level: Level, player: Player, hand: InteractionHand): InteractionResult {
+    override fun use(level: Level, player: Player, hand: InteractionHand): InteractionResultHolder<ItemStack> {
         val itemStack = player.getItemInHand(hand)
         level.playSound(
             null,
@@ -36,7 +36,7 @@ class GasBomb(props: Item.Properties) : Item(props), ProjectileItem {
             projectile.setPos(player.x, player.eyeY - 0.1, player.z)
             projectile.shootFromRotation(player, player.xRot, player.yRot, 0.0f, PROJECTILE_SHOOT_POWER, PROJECTILE_INACCURACY)
             if (!level.addFreshEntity(projectile)) {
-                return InteractionResult.FAIL
+                return InteractionResultHolder.fail(itemStack)
             }
         }
 
@@ -44,7 +44,7 @@ class GasBomb(props: Item.Properties) : Item(props), ProjectileItem {
         AccessoryCombatEffects.onSuccessfulWeaponUse(player, itemStack)
         player.swing(hand, true)
         itemStack.consume(1, player)
-        return if (level.isClientSide) InteractionResult.SUCCESS else InteractionResult.SUCCESS_SERVER
+        return InteractionResultHolder.sidedSuccess(itemStack, level.isClientSide)
     }
 
     override fun asProjectile(level: Level, position: Position, itemStack: ItemStack, direction: Direction): Projectile =

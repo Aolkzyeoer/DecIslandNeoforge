@@ -3,10 +3,10 @@ package com.dec.decisland.item.custom
 import com.dec.decisland.DecIsland
 import net.minecraft.core.component.DataComponents
 import net.minecraft.nbt.CompoundTag
-import net.minecraft.resources.Identifier
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.InteractionHand
-import net.minecraft.world.InteractionResult
+import net.minecraft.world.InteractionResultHolder
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.item.ItemStack
@@ -37,7 +37,7 @@ class BloodMare(properties: Properties) : Katana(properties) {
         sendBedrockKatanaEmitter(serverLevel, BLOOD_MARE_PARTICLE_ID, x, y, z)
     }
 
-    override fun use(level: Level, player: Player, hand: InteractionHand): InteractionResult {
+    override fun use(level: Level, player: Player, hand: InteractionHand): InteractionResultHolder<ItemStack> {
         val hitCount = sweepAttack(
             level,
             player,
@@ -53,17 +53,17 @@ class BloodMare(properties: Properties) : Katana(properties) {
         if (!level.isClientSide) {
             healFromHits(player, hitCount)
         }
-        return InteractionResult.SUCCESS
+        return InteractionResultHolder.sidedSuccess(player.getItemInHand(hand), level.isClientSide)
     }
 
-    override fun hurtEnemy(stack: ItemStack, target: LivingEntity, attacker: LivingEntity) {
+    override fun hurtEnemy(stack: ItemStack, target: LivingEntity, attacker: LivingEntity): Boolean {
         if (attacker.level().isClientSide) {
-            return
+            return true
         }
 
         if (attacker.health <= LOW_HEALTH_THRESHOLD) {
             if (attacker.random.nextInt(4) == 0) {
-                return
+                return true
             }
 
             val hand = if (attacker is Player) attacker.usedItemHand else null
@@ -80,7 +80,7 @@ class BloodMare(properties: Properties) : Katana(properties) {
                 { server, source -> attackServer(server, source) },
             )
             healFromHits(attacker, hitCount)
-            return
+            return true
         }
 
         val customData = stack.get(DataComponents.CUSTOM_DATA)
@@ -88,13 +88,13 @@ class BloodMare(properties: Properties) : Katana(properties) {
         val currentTime = System.currentTimeMillis()
 
         val shouldReset = if (tag.contains(LAST_ATTACK_TIME_KEY)) {
-            currentTime - tag.getLong(LAST_ATTACK_TIME_KEY).get() > getResetTimeMs()
+            currentTime - tag.getLong(LAST_ATTACK_TIME_KEY) > getResetTimeMs()
         } else {
             false
         }
 
         var attackCount = if (shouldReset) 0 else if (tag.contains(ATTACK_COUNTER_KEY)) {
-            tag.getInt(ATTACK_COUNTER_KEY).get()
+            tag.getInt(ATTACK_COUNTER_KEY)
         } else {
             0
         }
@@ -105,7 +105,7 @@ class BloodMare(properties: Properties) : Katana(properties) {
         stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag))
 
         if (attackCount < getMaxAttackCount()) {
-            return
+            return true
         }
 
         val hand = if (attacker is Player) attacker.usedItemHand else null
@@ -123,6 +123,7 @@ class BloodMare(properties: Properties) : Katana(properties) {
         )
         healFromHits(attacker, hitCount)
         stack.set(DataComponents.CUSTOM_DATA, CustomData.EMPTY)
+        return true
     }
 
     private fun healFromHits(source: LivingEntity, hitCount: Int) {
@@ -135,8 +136,8 @@ class BloodMare(properties: Properties) : Katana(properties) {
     }
 
     companion object {
-        private val BLOOD_MARE_PARTICLE_ID: Identifier =
-            Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "blood_mare_particle")
+        private val BLOOD_MARE_PARTICLE_ID: ResourceLocation =
+            ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "blood_mare_particle")
         private const val LOW_HEALTH_THRESHOLD: Float = 2.0f
         private const val LOW_HEALTH_ATTACK_BONUS_DAMAGE: Float = 6.0f
         private const val MAX_HEAL_PER_SWEEP: Float = 4.0f

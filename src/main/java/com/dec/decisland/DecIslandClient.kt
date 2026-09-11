@@ -7,7 +7,7 @@ import com.dec.decisland.block.ModBlocks
 import com.dec.decisland.item.category.Crop
 import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.ItemBlockRenderTypes
-import net.minecraft.client.renderer.chunk.ChunkSectionLayer
+import net.minecraft.client.renderer.RenderType
 import net.neoforged.api.distmarker.Dist
 import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.fml.ModContainer
@@ -38,16 +38,16 @@ object DecIslandClientEvents {
         DecIsland.LOGGER.info("MINECRAFT NAME >> {}", Minecraft.getInstance().user.name)
         event.enqueueWork {
             VoidFogConfig.load(Minecraft.getInstance().resourceManager)
-            ItemBlockRenderTypes.setRenderLayer(ModBlocks.SNOW_PORTAL.get(), ChunkSectionLayer.TRANSLUCENT)
-            ItemBlockRenderTypes.setRenderLayer(ModBlocks.NIGHTMARE_BLOCK.get(), ChunkSectionLayer.TRANSLUCENT)
-            ItemBlockRenderTypes.setRenderLayer(ModBlocks.FLOWER_GHOST_BLOCK.get(), ChunkSectionLayer.CUTOUT)
+            ItemBlockRenderTypes.setRenderLayer(ModBlocks.SNOW_PORTAL.get(), RenderType.translucent())
+            ItemBlockRenderTypes.setRenderLayer(ModBlocks.NIGHTMARE_BLOCK.get(), RenderType.translucent())
+            ItemBlockRenderTypes.setRenderLayer(ModBlocks.FLOWER_GHOST_BLOCK.get(), RenderType.cutout())
             SimplePlant.allBlocks().forEach { block ->
-                ItemBlockRenderTypes.setRenderLayer(block, ChunkSectionLayer.CUTOUT)
+                ItemBlockRenderTypes.setRenderLayer(block, RenderType.cutout())
             }
             Crop.allBlocks().forEach { block ->
-                ItemBlockRenderTypes.setRenderLayer(block, ChunkSectionLayer.CUTOUT)
+                ItemBlockRenderTypes.setRenderLayer(block, RenderType.cutout())
             }
-            ItemBlockRenderTypes.setRenderLayer(Crop.CORN_CROP.get(), ChunkSectionLayer.CUTOUT)
+            ItemBlockRenderTypes.setRenderLayer(Crop.CORN_CROP.get(), RenderType.cutout())
         }
     }
 }

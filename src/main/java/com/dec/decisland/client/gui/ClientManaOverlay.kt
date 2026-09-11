@@ -3,8 +3,7 @@ package com.dec.decisland.client.gui
 import com.dec.decisland.DecIsland
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.GuiGraphics
-import net.minecraft.client.renderer.RenderPipelines
-import net.minecraft.resources.Identifier
+import net.minecraft.resources.ResourceLocation
 import kotlin.math.abs
 import kotlin.math.min
 import kotlin.math.sin
@@ -14,11 +13,11 @@ object ClientManaOverlay {
     private var isFadingOut: Boolean = false
     private const val FADE_DELAY_MS: Long = 3000
     private const val FADE_DURATION_MS: Long = 3000
-    private val manaIcons: Array<Identifier> = Array(5) { i ->
-        Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "textures/gui/sprites/mana/mana_$i.png")
+    private val manaIcons: Array<ResourceLocation> = Array(5) { i ->
+        ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "textures/gui/sprites/mana/mana_$i.png")
     }
-    private val manaMaxBorderIcons: Array<Identifier> = Array(5) { i ->
-        Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "textures/gui/sprites/mana/mana_max_$i.png")
+    private val manaMaxBorderIcons: Array<ResourceLocation> = Array(5) { i ->
+        ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "textures/gui/sprites/mana/mana_max_$i.png")
     }
     private var cachedCurrentMana: Float = 0.0f
     private var cachedMaxMana: Float = 20.0f
@@ -66,60 +65,58 @@ object ClientManaOverlay {
         val iconSize = 16
         val x = (screenWidth - iconSize) / 2
         val y = screenHeight - 49
-        val baseColorWithAlpha = ((fadeAlpha * 255).toInt() shl 24) or 0xFFFFFF
 
+        guiGraphics.setColor(1.0f, 1.0f, 1.0f, fadeAlpha)
         guiGraphics.blit(
-            RenderPipelines.GUI_TEXTURED,
             manaIcons[lowIndex],
             x,
             y,
+            iconSize,
+            iconSize,
             0.0f,
             0.0f,
             iconSize,
             iconSize,
             iconSize,
             iconSize,
-            iconSize,
-            iconSize,
-            baseColorWithAlpha,
         )
+        guiGraphics.setColor(1.0f, 1.0f, 1.0f, 1.0f)
 
         if (lowIndex != highIndex) {
             val combinedAlpha = alphaHigh * fadeAlpha
-            val colorWithAlpha = ((combinedAlpha * 255).toInt() shl 24) or 0xFFFFFF
+            guiGraphics.setColor(1.0f, 1.0f, 1.0f, combinedAlpha)
             guiGraphics.blit(
-                RenderPipelines.GUI_TEXTURED,
                 manaIcons[highIndex],
                 x,
                 y,
+                iconSize,
+                iconSize,
                 0.0f,
                 0.0f,
                 iconSize,
                 iconSize,
                 iconSize,
                 iconSize,
-                iconSize,
-                iconSize,
-                colorWithAlpha,
             )
+            guiGraphics.setColor(1.0f, 1.0f, 1.0f, 1.0f)
         }
 
         val maxManaBorderIndex = getMaxManaBorderIndex(maxMana)
+        guiGraphics.setColor(1.0f, 1.0f, 1.0f, fadeAlpha)
         guiGraphics.blit(
-            RenderPipelines.GUI_TEXTURED,
             manaMaxBorderIcons[maxManaBorderIndex],
             x,
             y,
+            iconSize,
+            iconSize,
             0.0f,
             0.0f,
             iconSize,
             iconSize,
             iconSize,
             iconSize,
-            iconSize,
-            iconSize,
-            baseColorWithAlpha,
         )
+        guiGraphics.setColor(1.0f, 1.0f, 1.0f, 1.0f)
     }
 
     private fun updateTransitionMana() {

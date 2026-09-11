@@ -2,8 +2,8 @@ package com.dec.decisland.item
 
 import com.dec.decisland.DecIsland
 import net.minecraft.core.registries.BuiltInRegistries
-import net.minecraft.client.data.models.model.ModelTemplate
-import net.minecraft.client.data.models.model.ModelTemplates
+import net.minecraft.data.models.model.ModelTemplate
+import net.minecraft.data.models.model.ModelTemplates
 import net.minecraft.tags.TagKey
 import net.minecraft.world.item.CreativeModeTab
 import net.minecraft.world.item.Item

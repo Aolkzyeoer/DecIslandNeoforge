@@ -6,6 +6,7 @@ import net.minecraft.sounds.SoundEvents
 import net.minecraft.sounds.SoundSource
 import net.minecraft.world.InteractionHand
 import net.minecraft.world.InteractionResult
+import net.minecraft.world.ItemInteractionResult
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.BlockGetter
@@ -53,9 +54,10 @@ abstract class SimpleCropBlock(
         player: Player,
         hand: InteractionHand,
         hitResult: BlockHitResult,
-    ): InteractionResult {
+    ): ItemInteractionResult {
         if (canHarvest(state)) {
-            return harvest(state, level, pos, player)
+            harvest(state, level, pos, player)
+            return ItemInteractionResult.SUCCESS
         }
         return super.useItemOn(stack, state, level, pos, player, hand, hitResult)
     }
@@ -68,7 +70,8 @@ abstract class SimpleCropBlock(
         hitResult: BlockHitResult,
     ): InteractionResult {
         if (canHarvest(state)) {
-            return harvest(state, level, pos, player)
+            harvest(state, level, pos, player)
+            return InteractionResult.SUCCESS
         }
         return super.useWithoutItem(state, level, pos, player, hitResult)
     }
@@ -80,8 +83,8 @@ abstract class SimpleCropBlock(
         level: Level,
         pos: BlockPos,
         player: Player,
-    ): InteractionResult {
-        val resetAge = harvestResetAge ?: return InteractionResult.PASS
+    ) {
+        val resetAge = harvestResetAge ?: return
         if (level is ServerLevel) {
             for (drop in getDrops(state, level, pos, null)) {
                 popResource(level, pos, drop)
@@ -98,7 +101,6 @@ abstract class SimpleCropBlock(
             level.setBlock(pos, newState, UPDATE_CLIENTS)
             level.gameEvent(GameEvent.BLOCK_CHANGE, pos, GameEvent.Context.of(player, newState))
         }
-        return InteractionResult.SUCCESS
     }
 
     private fun stageForAge(age: Int): Int {

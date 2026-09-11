@@ -1,18 +1,16 @@
 package com.dec.decisland.entity.projectile
 
 import com.dec.decisland.DecIsland
-import com.dec.decisland.api.CustomInertia
 import com.dec.decisland.entity.ModEntities
 import com.dec.decisland.item.category.Weapon
 import com.dec.decisland.network.Networking
 import net.minecraft.core.particles.ItemParticleOption
 import net.minecraft.core.particles.ParticleTypes
-import net.minecraft.resources.Identifier
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.EntityType
 import net.minecraft.world.entity.LivingEntity
-import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrowableItemProjectile
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.Items
@@ -21,7 +19,7 @@ import net.minecraft.world.phys.EntityHitResult
 import net.minecraft.world.phys.HitResult
 
 class FrozenBallProjectile(entityType: EntityType<FrozenBallProjectile>, level: Level) :
-    ThrowableItemProjectile(entityType, level), CustomInertia {
+    CustomInertiaProjectile(entityType, level) {
     constructor(level: Level, owner: LivingEntity, item: ItemStack) : this(ModEntities.FROZEN_BALL.get(), level) {
         setOwner(owner)
         setItem(item.copyWithCount(1))
@@ -76,7 +74,7 @@ class FrozenBallProjectile(entityType: EntityType<FrozenBallProjectile>, level: 
         get() = 1.0f
 
     companion object {
-        private val TRAIL_PARTICLE_ID: Identifier =
-            Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "everlasting_winter_wake_particle")
+        private val TRAIL_PARTICLE_ID: ResourceLocation =
+            ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "everlasting_winter_wake_particle")
     }
 }

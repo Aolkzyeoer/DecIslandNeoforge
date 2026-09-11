@@ -17,7 +17,7 @@ object ModAttachments {
     val MAX_HEALTH_LEVEL: Supplier<AttachmentType<Int>> =
         ATTACHMENT_TYPES.register("max_health_level", Supplier {
             AttachmentType.builder(Supplier { 0 })
-                .serialize(Codec.INT.fieldOf("value"))
+                .serialize(Codec.INT)
                 .build()
         })
 
@@ -25,7 +25,7 @@ object ModAttachments {
     val MAX_MANA: Supplier<AttachmentType<Float>> =
         ATTACHMENT_TYPES.register("max_mana", Supplier {
             AttachmentType.builder(Supplier { 20.0f })
-                .serialize(Codec.FLOAT.fieldOf("value"))
+                .serialize(Codec.FLOAT)
                 .build()
         })
 
@@ -33,7 +33,7 @@ object ModAttachments {
     val MANA_GAIN_LEVEL: Supplier<AttachmentType<Float>> =
         ATTACHMENT_TYPES.register("mana_level", Supplier {
             AttachmentType.builder(Supplier { 0.0f })
-                .serialize(Codec.FLOAT.fieldOf("value"))
+                .serialize(Codec.FLOAT)
                 .build()
         })
 
@@ -41,7 +41,7 @@ object ModAttachments {
     val MANA_RECKON: Supplier<AttachmentType<Int>> =
         ATTACHMENT_TYPES.register("mana_regen_level", Supplier {
             AttachmentType.builder(Supplier { 0 })
-                .serialize(Codec.INT.fieldOf("value"))
+                .serialize(Codec.INT)
                 .build()
         })
 
@@ -49,7 +49,7 @@ object ModAttachments {
     val CURRENT_MANA: Supplier<AttachmentType<Float>> =
         ATTACHMENT_TYPES.register("current_mana", Supplier {
             AttachmentType.builder(Supplier { 20.0f })
-                .serialize(Codec.FLOAT.fieldOf("value"))
+                .serialize(Codec.FLOAT)
                 .build()
         })
 
@@ -57,7 +57,7 @@ object ModAttachments {
     val MAGIC_GAP: Supplier<AttachmentType<Int>> =
         ATTACHMENT_TYPES.register("magic_gap", Supplier {
             AttachmentType.builder(Supplier { 60 })
-                .serialize(Codec.INT.fieldOf("value"))
+                .serialize(Codec.INT)
                 .build()
         })
 
@@ -65,7 +65,7 @@ object ModAttachments {
     val PREV_MAGIC: Supplier<AttachmentType<Float>> =
         ATTACHMENT_TYPES.register("prev_magic", Supplier {
             AttachmentType.builder(Supplier { 0.0f })
-                .serialize(Codec.FLOAT.fieldOf("value"))
+                .serialize(Codec.FLOAT)
                 .build()
         })
 

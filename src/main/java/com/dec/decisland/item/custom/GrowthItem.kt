@@ -23,15 +23,16 @@ class GrowthItem(properties: Properties) : MagicWeapon(properties) {
         spawnRay(serverLevel, source, stack, USE_LAUNCH_POWER)
     }
 
-    override fun hurtEnemy(stack: ItemStack, target: LivingEntity, attacker: LivingEntity) {
-        val serverLevel = attacker.level() as? ServerLevel ?: return
-        val player = attacker as? Player ?: return
+    override fun hurtEnemy(stack: ItemStack, target: LivingEntity, attacker: LivingEntity): Boolean {
+        val serverLevel = attacker.level() as? ServerLevel ?: return false
+        val player = attacker as? Player ?: return false
         if (ManaManager.getCurrentMana(player) <= ATTACK_MANA_COST) {
-            return
+            return false
         }
         ManaManager.reduceMana(player, ATTACK_MANA_COST)
         serverLevel.playSound(null, attacker.x, attacker.y, attacker.z, SoundEvents.AMETHYST_BLOCK_BREAK, SoundSource.PLAYERS)
         spawnRay(serverLevel, attacker, stack, ATTACK_LAUNCH_POWER)
+        return true
     }
 
     private fun spawnRay(serverLevel: ServerLevel, source: LivingEntity, stack: ItemStack, velocity: Float) {

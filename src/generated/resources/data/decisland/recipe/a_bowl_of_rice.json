@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "#": {
+      "item": "decisland:rice"
+    },
+    "X": {
+      "item": "minecraft:bowl"
+    }
+  },
+  "pattern": [
+    "###",
+    " X "
+  ],
+  "result": {
+    "count": 1,
+    "id": "decisland:a_bowl_of_rice"
+  }
+}

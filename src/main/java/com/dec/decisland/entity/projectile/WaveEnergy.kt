@@ -2,7 +2,7 @@ package com.dec.decisland.entity.projectile
 
 import com.dec.decisland.DecIsland
 import com.dec.decisland.entity.ModEntities
-import net.minecraft.resources.Identifier
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.EntityType
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.item.ItemStack
@@ -22,5 +22,5 @@ class WaveEnergy(entityType: EntityType<WaveEnergy>, level: Level) : ParticleRay
     override val airInertia: Double = 1.0
     override val waterInertia: Double = 1.2
     override val trailDurationTicks: Int = 6
-    override val trailParticleId: Identifier = Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "wave_wake_particle")
+    override val trailParticleId: ResourceLocation = ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "wave_wake_particle")
 }

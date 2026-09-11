@@ -33,7 +33,7 @@ open class MaxManaBoostItem(properties: Properties) : Item(properties) {
                 livingEntity.setData(getAttachment(), currentLevel + getBoostValue())
                 livingEntity.foodData.eat(getNutrition(), getSaturationModifier())
                 stack.shrink(1)
-                livingEntity.playSound(SoundEvents.GENERIC_EAT.value(), 1.0f, 1.0f)
+                livingEntity.playSound(SoundEvents.GENERIC_EAT, 1.0f, 1.0f)
             } else {
                 return stack
             }

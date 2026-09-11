@@ -10,7 +10,7 @@ import com.dec.decisland.item.custom.accessory.DiamondRingItem
 import com.dec.decisland.item.custom.accessory.EmeraldRingItem
 import com.dec.decisland.item.custom.accessory.GoldRingItem
 import com.dec.decisland.item.custom.accessory.HeartRingItem
-import net.minecraft.client.data.models.model.ModelTemplates
+import net.minecraft.data.models.model.ModelTemplates
 import net.minecraft.world.item.CreativeModeTab
 import net.minecraft.world.item.Item
 import net.neoforged.neoforge.registries.DeferredItem

@@ -1,6 +1,5 @@
 package com.dec.decisland.entity.projectile
 
-import com.dec.decisland.api.CustomInertia
 import com.dec.decisland.entity.ModEntities
 import com.dec.decisland.item.ModItems
 import net.minecraft.server.level.ServerLevel
@@ -8,7 +7,6 @@ import net.minecraft.world.effect.MobEffectInstance
 import net.minecraft.world.effect.MobEffects
 import net.minecraft.world.entity.EntityType
 import net.minecraft.world.entity.LivingEntity
-import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrowableItemProjectile
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.Level
@@ -17,7 +15,7 @@ import net.minecraft.world.phys.EntityHitResult
 import net.minecraft.world.phys.HitResult
 import net.minecraft.world.phys.Vec3
 
-class SoulWakeBullet(entityType: EntityType<SoulWakeBullet>, level: Level) : ThrowableItemProjectile(entityType, level), CustomInertia {
+class SoulWakeBullet(entityType: EntityType<SoulWakeBullet>, level: Level) : CustomInertiaProjectile(entityType, level) {
     constructor(level: Level, owner: LivingEntity?, pos: Vec3, motion: Vec3) : this(ModEntities.SOUL_WAKE_BULLET.get(), level) {
         owner?.let(::setOwner)
         setItem(ItemStack(ModItems.SOUL_WAKE_BULLET_RENDER.get()))

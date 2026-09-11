@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "decisland:block/candy_block"
+    }
+  }
+}

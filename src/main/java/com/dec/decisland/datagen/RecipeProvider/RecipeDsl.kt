@@ -8,10 +8,7 @@ import net.minecraft.data.recipes.SingleItemRecipeBuilder
 import net.minecraft.data.recipes.SmithingTransformRecipeBuilder
 import net.minecraft.data.recipes.SmithingTrimRecipeBuilder
 import net.minecraft.data.recipes.SpecialRecipeBuilder
-import net.minecraft.data.recipes.TransmuteRecipeBuilder
-import net.minecraft.resources.Identifier
-import net.minecraft.resources.ResourceKey
-import net.minecraft.core.registries.Registries
+import net.minecraft.resources.ResourceLocation
 
 object RecipeDsl {
     fun save(
@@ -25,8 +22,8 @@ object RecipeDsl {
             is StonecuttingRecipeConfig -> saveStonecutting(context, config)
             is SmithingTransformRecipeConfig -> saveSmithingTransform(context, config)
             is SmithingTrimRecipeConfig -> saveSmithingTrim(context, config)
-            is TransmuteRecipeConfig -> saveTransmute(context, config)
             is SpecialRecipeConfig -> saveSpecial(context, config)
+            else -> throw IllegalArgumentException("Unsupported recipe config: ${config.name}")
         }
     }
 
@@ -34,7 +31,7 @@ object RecipeDsl {
         context: RecipeContext,
         config: ShapedRecipeConfig,
     ) {
-        val builder = ShapedRecipeBuilder.shaped(context.items, config.category, config.result, config.count)
+        val builder = ShapedRecipeBuilder.shaped(config.category, config.result, config.count)
         config.pattern.forEach(builder::pattern)
         config.keys.forEach { (key, ingredient) ->
             builder.define(key, ingredient.toIngredient(context.items))
@@ -46,7 +43,7 @@ object RecipeDsl {
         context: RecipeContext,
         config: ShapelessRecipeConfig,
     ) {
-        val builder = ShapelessRecipeBuilder.shapeless(context.items, config.category, config.result, config.count)
+        val builder = ShapelessRecipeBuilder.shapeless(config.category, config.result, config.count)
         config.ingredients.forEach { entry ->
             builder.requires(entry.ingredient.toIngredient(context.items), entry.count)
         }
@@ -105,30 +102,17 @@ object RecipeDsl {
         context: RecipeContext,
         config: SmithingTrimRecipeConfig,
     ) {
+        // 1.21.1 的锻造模板纹样在运行时由模板物品推导，datagen 无需指定 trimPattern。
         val builder = SmithingTrimRecipeBuilder.smithingTrim(
             config.template.toIngredient(context.items),
             config.base.toIngredient(context.items),
             config.addition.toIngredient(context.items),
-            context.trimPatterns.getOrThrow(config.trimPattern),
             config.category,
         )
         config.unlockCriteria.forEach { unlock ->
             builder.unlocks(unlock.name, unlock.build(context.items))
         }
         builder.save(context.output, recipeKey(config))
-    }
-
-    private fun saveTransmute(
-        context: RecipeContext,
-        config: TransmuteRecipeConfig,
-    ) {
-        val builder = TransmuteRecipeBuilder.transmute(
-            config.category,
-            config.input.toIngredient(context.items),
-            config.material.toIngredient(context.items),
-            config.result,
-        )
-        applyCommon(builder, context, config)
     }
 
     private fun saveSpecial(
@@ -152,6 +136,6 @@ object RecipeDsl {
         builder.save(context.output, recipeKey(config))
     }
 
-    private fun recipeKey(config: RecipeConfig): ResourceKey<net.minecraft.world.item.crafting.Recipe<*>> =
-        ResourceKey.create(Registries.RECIPE, Identifier.fromNamespaceAndPath("decisland", config.name))
+    private fun recipeKey(config: RecipeConfig): ResourceLocation =
+        ResourceLocation.fromNamespaceAndPath("decisland", config.name)
 }
