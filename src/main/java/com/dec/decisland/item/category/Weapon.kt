@@ -22,23 +22,26 @@ import com.dec.decisland.item.gun.ShortFlintlock
 import com.dec.decisland.item.gun.StarFlintlock
 import com.dec.decisland.item.gun.StormFlintlock
 import com.dec.decisland.tag.ModItemTags
-import net.minecraft.client.data.models.model.ModelTemplate
-import net.minecraft.client.data.models.model.ModelTemplates
+import net.minecraft.data.models.model.ModelTemplate
+import net.minecraft.data.models.model.ModelTemplates
 import net.minecraft.core.Holder
 import net.minecraft.core.component.DataComponents
-import net.minecraft.resources.Identifier
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.tags.ItemTags
-import net.minecraft.util.Unit as McUnit
 import net.minecraft.tags.TagKey
+import com.dec.decisland.item.ToolMaterial
+import com.dec.decisland.item.compat.axe
+import com.dec.decisland.item.compat.enchantable
+import com.dec.decisland.item.compat.repairable
+import com.dec.decisland.item.compat.sword
+import com.dec.decisland.item.compat.useCooldown
 import net.minecraft.world.food.FoodProperties
 import net.minecraft.world.effect.MobEffect
 import net.minecraft.world.effect.MobEffects
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.Items.STICK
 import net.minecraft.world.item.Items
-import net.minecraft.world.item.ToolMaterial
-import net.minecraft.world.item.component.Consumables
-import net.minecraft.world.item.component.UseEffects
+import net.minecraft.world.item.component.Unbreakable
 import net.neoforged.neoforge.registries.DeferredItem
 import java.util.function.Function
 import java.util.function.Supplier
@@ -530,7 +533,7 @@ object Weapon {
         ItemConfig.Builder("candy_cane")
             .props {
                 Item.Properties()
-                    .food(FoodProperties(2, 0.2f, true), Consumables.defaultFood().build())
+                    .food(FoodProperties.Builder().nutrition(2).saturationModifier(0.2f).alwaysEdible().build())
                     .sword(ModToolMaterial.CANDY_CANE, 2.0f, -2.0f)
                     .stacksTo(1)
             }
@@ -581,7 +584,7 @@ object Weapon {
                 Item.Properties()
                     .sword(ModToolMaterial.DECREPIT_ATLANTIS, 5.0f, -2.4f)
                     .stacksTo(1)
-                    .component(DataComponents.UNBREAKABLE, McUnit.INSTANCE)
+                    .component(DataComponents.UNBREAKABLE, Unbreakable(true))
             }
             .tags(swordWeaponTags)
             .modelTemplate(ModelTemplates.FLAT_HANDHELD_ITEM)
@@ -677,9 +680,6 @@ object Weapon {
             .props {
                 Item.Properties().sword(material, damage, -2.4f).stacksTo(1).also {
                     if (cooldown != null) it.useCooldown(cooldown)
-                    if (kind == BatchBSwordItem.Kind.SHADOW) {
-                        it.component(DataComponents.USE_EFFECTS, UseEffects(true, true, 1.0f))
-                    }
                 }
             }
             .tags(swordWeaponTags).modelTemplate(ModelTemplates.FLAT_HANDHELD_ITEM)
@@ -720,8 +720,13 @@ object Weapon {
         ItemConfig.Builder("hard_lollipop")
             .props {
                 Item.Properties()
-                    .food(FoodProperties(14, 0.8f, false), Consumables.defaultFood().build())
-                    .usingConvertsTo(STICK)
+                    .food(
+                        FoodProperties.Builder()
+                            .nutrition(14)
+                            .saturationModifier(0.8f)
+                            .usingConvertsTo(STICK)
+                            .build(),
+                    )
                     .sword(ModToolMaterial.HARD_LOLLIPOP, 3.0f, -3.0f)
             }
             .tags(swordWeaponTags)
@@ -735,7 +740,7 @@ object Weapon {
         ItemConfig.Builder("gingerbread_sword")
             .props {
                 Item.Properties()
-                    .food(FoodProperties(5, 0.8f, true), Consumables.defaultFood().build())
+                    .food(FoodProperties.Builder().nutrition(5).saturationModifier(0.8f).alwaysEdible().build())
                     .sword(ModToolMaterial.GINGERBREAD_SWORD, 2.0f, -2.4f)
                     .repairable(Food.GINGERBREAD_MAN.get())
             }
@@ -750,7 +755,7 @@ object Weapon {
         ItemConfig.Builder("lollipop")
             .props {
                 Item.Properties()
-                    .food(FoodProperties(8, 0.8f, false), Consumables.defaultFood().build())
+                    .food(FoodProperties.Builder().nutrition(8).saturationModifier(0.8f).build())
                     .sword(ModToolMaterial.LOLLIPOP, 1.0f, -3.0f)
                     .repairable(ModItems.CANDY.get())
             }
@@ -765,7 +770,7 @@ object Weapon {
         ItemConfig.Builder("long_bread")
             .props {
                 Item.Properties()
-                    .food(FoodProperties(17, 0.8f, false), Consumables.defaultFood().build())
+                    .food(FoodProperties.Builder().nutrition(17).saturationModifier(0.8f).build())
                     .sword(ModToolMaterial.LONG_BREAD, 0.0f, -2.8f)
                     .repairable(Items.BREAD)
             }
@@ -937,7 +942,7 @@ object Weapon {
                             1.0f,
                             id("blood_sickle_particle"),
                             id("blood_spore_parasitic_particle"),
-                            sickleEffect(MobEffects.SLOWNESS, 5, 0),
+                            sickleEffect(MobEffects.MOVEMENT_SLOWDOWN, 5, 0),
                         ),
                     )
                     .proc(
@@ -965,7 +970,7 @@ object Weapon {
             .passiveSkill(
                 SickleItem.PassiveSkillConfig.Builder()
                     .baseExtraDamage(1.0f)
-                    .proc(sickleProc(9, 0.0f, id("copper_sickle_particle"), null, sickleEffect(MobEffects.SLOWNESS, 5, 0)))
+                    .proc(sickleProc(9, 0.0f, id("copper_sickle_particle"), null, sickleEffect(MobEffects.MOVEMENT_SLOWDOWN, 5, 0)))
                     .proc(sickleProc(8, 0.0f, id("copper_sickle_particle"), null, sickleEffect(MobEffects.WEAKNESS, 5, 0)))
                     .build(),
             )
@@ -982,7 +987,7 @@ object Weapon {
             .passiveSkill(
                 SickleItem.PassiveSkillConfig.Builder()
                     .baseExtraDamage(1.0f)
-                    .proc(sickleProc(7, 0.0f, id("diamond_sickle_particle"), null, sickleEffect(MobEffects.SLOWNESS, 8, 0)))
+                    .proc(sickleProc(7, 0.0f, id("diamond_sickle_particle"), null, sickleEffect(MobEffects.MOVEMENT_SLOWDOWN, 8, 0)))
                     .proc(sickleProc(5, 0.0f, id("diamond_sickle_particle"), null, sickleEffect(MobEffects.WEAKNESS, 8, 1)))
                     .build(),
             )
@@ -1005,7 +1010,7 @@ object Weapon {
                             0.0f,
                             id("everlasting_winter_sickle_particle"),
                             id("frozen_attack_particle"),
-                            sickleEffect(MobEffects.SLOWNESS, 2, 6),
+                            sickleEffect(MobEffects.MOVEMENT_SLOWDOWN, 2, 6),
                         ),
                     )
                     .proc(
@@ -1024,7 +1029,7 @@ object Weapon {
                     .manaCost(1.0f)
                     .minRadius(2.0)
                     .maxRadius(4.0)
-                    .targetEffect(sickleEffect(MobEffects.SLOWNESS, 3, 1))
+                    .targetEffect(sickleEffect(MobEffects.MOVEMENT_SLOWDOWN, 3, 1))
                     .casterParticleId(id("everlasting_winter_seep_particle"))
                     .targetParticleId(id("everlasting_winter_seep_particle"))
                     .particleDurationTicks(6)
@@ -1050,7 +1055,7 @@ object Weapon {
                             0.0f,
                             id("ghost_sickle_particle"),
                             null,
-                            sickleEffect(MobEffects.SLOWNESS, 5, 1),
+                            sickleEffect(MobEffects.MOVEMENT_SLOWDOWN, 5, 1),
                         ),
                     )
                     .proc(
@@ -1078,7 +1083,7 @@ object Weapon {
             .passiveSkill(
                 SickleItem.PassiveSkillConfig.Builder()
                     .baseExtraDamage(1.0f)
-                    .proc(sickleProc(5, 0.0f, id("gold_sickle_particle"), null, sickleEffect(MobEffects.SLOWNESS, 3, 2)))
+                    .proc(sickleProc(5, 0.0f, id("gold_sickle_particle"), null, sickleEffect(MobEffects.MOVEMENT_SLOWDOWN, 3, 2)))
                     .proc(sickleProc(4, 0.0f, id("gold_sickle_particle"), null, sickleEffect(MobEffects.WEAKNESS, 3, 2)))
                     .build(),
             )
@@ -1096,7 +1101,7 @@ object Weapon {
             .passiveSkill(
                 SickleItem.PassiveSkillConfig.Builder()
                     .baseExtraDamage(1.0f)
-                    .proc(sickleProc(8, 0.0f, id("iron_sickle_particle"), null, sickleEffect(MobEffects.SLOWNESS, 6, 0)))
+                    .proc(sickleProc(8, 0.0f, id("iron_sickle_particle"), null, sickleEffect(MobEffects.MOVEMENT_SLOWDOWN, 6, 0)))
                     .proc(sickleProc(7, 0.0f, id("iron_sickle_particle"), null, sickleEffect(MobEffects.WEAKNESS, 6, 0)))
                     .build(),
             )
@@ -1113,7 +1118,7 @@ object Weapon {
             .passiveSkill(
                 SickleItem.PassiveSkillConfig.Builder()
                     .baseExtraDamage(1.0f)
-                    .proc(sickleProc(7, 0.0f, id("netherite_sickle_particle"), null, sickleEffect(MobEffects.SLOWNESS, 9, 0)))
+                    .proc(sickleProc(7, 0.0f, id("netherite_sickle_particle"), null, sickleEffect(MobEffects.MOVEMENT_SLOWDOWN, 9, 0)))
                     .proc(sickleProc(5, 0.0f, id("netherite_sickle_particle"), null, sickleEffect(MobEffects.WEAKNESS, 9, 1)))
                     .build(),
             )
@@ -1130,7 +1135,7 @@ object Weapon {
             .passiveSkill(
                 SickleItem.PassiveSkillConfig.Builder()
                     .baseExtraDamage(1.0f)
-                    .proc(sickleProc(8, 0.0f, id("steel_sickle_particle"), null, sickleEffect(MobEffects.SLOWNESS, 6, 0)))
+                    .proc(sickleProc(8, 0.0f, id("steel_sickle_particle"), null, sickleEffect(MobEffects.MOVEMENT_SLOWDOWN, 6, 0)))
                     .proc(sickleProc(7, 0.0f, id("steel_sickle_particle"), null, sickleEffect(MobEffects.WEAKNESS, 7, 1)))
                     .build(),
             )
@@ -1329,9 +1334,9 @@ object Weapon {
         ModToolMaterial.EVERLASTING_WINTER_DAGGER,
         config = DaggerItem.DaggerConfig.Builder("everlasting_winter_dagger", 21.0f)
             .movementSpeedAddition(0.01)
-            .aura(4.0, sickleEffect(MobEffects.SLOWNESS, 3, 1))
+            .aura(4.0, sickleEffect(MobEffects.MOVEMENT_SLOWDOWN, 3, 1))
             .casterParticleId(id("everlasting_winter_seep_particle"))
-            .targetEffect(sickleEffect(MobEffects.SLOWNESS, 3, 6))
+            .targetEffect(sickleEffect(MobEffects.MOVEMENT_SLOWDOWN, 3, 6))
             .targetParticleId(id("everlasting_winter_seep_particle"))
             .build(),
         attackDamage = 6.0f,
@@ -1549,7 +1554,6 @@ object Weapon {
                 .props {
                     Item.Properties()
                         .axe(material, attackDamage, attackSpeed)
-                        .component(DataComponents.WEAPON, net.minecraft.world.item.component.Weapon(1))
                         .stacksTo(1)
                         .useCooldown(cooldownSeconds)
                         .repairable(repairItem.get())
@@ -1591,8 +1595,8 @@ object Weapon {
     private fun sickleProc(
         chanceDenominator: Int,
         extraDamage: Float = 0.0f,
-        holderParticleId: Identifier? = null,
-        targetParticleId: Identifier? = null,
+        holderParticleId: ResourceLocation? = null,
+        targetParticleId: ResourceLocation? = null,
         vararg effects: SickleItem.EffectConfig,
     ): SickleItem.PassiveProcConfig {
         val builder = SickleItem.PassiveProcConfig.Builder(chanceDenominator)
@@ -1611,7 +1615,7 @@ object Weapon {
             .amplifier(amplifier)
             .build()
 
-    private fun id(path: String): Identifier = Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, path)
+    private fun id(path: String): ResourceLocation = ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, path)
 
     private fun registerStaff(
         name: String,

@@ -1,4 +1,4 @@
-package com.dec.decisland.entity.projectile
+﻿package com.dec.decisland.entity.projectile
 
 import com.dec.decisland.entity.ModEntities
 import net.minecraft.server.level.ServerLevel
@@ -44,7 +44,7 @@ class DeepEnergy(entityType: EntityType<DeepEnergy>, level: Level) :
         cloud.radiusOnUse = 0.0f
         cloud.durationOnUse = 0
         cloud.radiusPerTick = 0.0f
-        cloud.addEffect(MobEffectInstance(MobEffects.SLOWNESS, 20 * 5, 1))
+        cloud.addEffect(MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 20 * 5, 1))
         serverLevel.addFreshEntity(cloud)
     }
 }

@@ -4,21 +4,37 @@ import com.dec.decisland.item.CustomItemProperties
 import com.dec.decisland.item.ItemConfig
 import com.dec.decisland.item.ModCreativeModeTabs
 import com.dec.decisland.item.ModItems
+import com.dec.decisland.item.compat.useCooldown
 import com.dec.decisland.item.custom.GlintItem
-import net.minecraft.client.data.models.model.ModelTemplates
+import net.minecraft.core.Holder
+import net.minecraft.data.models.model.ModelTemplates
+import net.minecraft.world.effect.MobEffect
 import net.minecraft.world.effect.MobEffectInstance
 import net.minecraft.world.effect.MobEffects
+import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.food.FoodProperties
 import net.minecraft.world.item.Item
+import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.Items
-import net.minecraft.world.item.component.Consumables
-import net.minecraft.world.item.consume_effects.ApplyStatusEffectsConsumeEffect
-import net.minecraft.world.item.consume_effects.ConsumeEffect
-import net.minecraft.world.item.consume_effects.RemoveStatusEffectsConsumeEffect
+import net.minecraft.world.level.Level
 import net.neoforged.neoforge.registries.DeferredItem
 import java.util.function.Supplier
 
 object Food {
+    /** 1.21.1 兼容层：替代 1.21.2+ 的 ApplyStatusEffectsConsumeEffect（食用时以概率施加效果）。 */
+    private data class FoodEffect(val effect: MobEffectInstance, val probability: Float = 1.0f)
+
+    /** 1.21.1 兼容层：替代 1.21.2+ 的 RemoveStatusEffectsConsumeEffect（食用时移除指定效果）。 */
+    private class CureFoodItem(properties: Item.Properties, private val cures: List<Holder<MobEffect>>) : Item(properties) {
+        override fun finishUsingItem(stack: ItemStack, level: Level, livingEntity: LivingEntity): ItemStack {
+            val result = super.finishUsingItem(stack, level, livingEntity)
+            if (!level.isClientSide) {
+                cures.forEach { livingEntity.removeEffect(it) }
+            }
+            return result
+        }
+    }
+
     private fun registerConsumable(
         name: String,
         enUs: String? = null,
@@ -33,7 +49,8 @@ object Food {
         cooldown: Float? = null,
         useDurationSeconds: Float = 1.6f,
         compostableChance: Float = 0.0f,
-        effects: List<ConsumeEffect> = emptyList(),
+        effects: List<FoodEffect> = emptyList(),
+        cures: List<Holder<MobEffect>> = emptyList(),
     ): DeferredItem<Item> {
         val builder = ItemConfig.Builder(
             name,
@@ -42,32 +59,34 @@ object Food {
                 if (zhCn != null) put("zh_cn", zhCn)
             },
         )
-        if (glint) {
+        if (cures.isNotEmpty()) {
+            builder.func { props -> CureFoodItem(props, cures) }
+        } else if (glint) {
             builder.func(::GlintItem)
         }
 
         return ModItems.registerItem(
             builder
                 .props {
-                    var consumable = if (drink) Consumables.defaultDrink() else Consumables.defaultFood()
-                    if (useDurationSeconds != 1.6f) {
-                        consumable = consumable.consumeSeconds(useDurationSeconds)
+                    val foodBuilder = FoodProperties.Builder().nutrition(nutrition).saturationModifier(saturation)
+                    if (alwaysEat) {
+                        foodBuilder.alwaysEdible()
                     }
-                    effects.forEach { effect ->
-                        consumable = consumable.onConsume(effect)
+                    if (convertTo != null) {
+                        foodBuilder.usingConvertsTo(convertTo.get())
                     }
+                    effects.forEach { foodBuilder.effect(it.effect, it.probability) }
+                    val food = foodBuilder.build()
 
                     var properties = Item.Properties()
                         .stacksTo(stackSize)
-                        .food(FoodProperties(nutrition, saturation, alwaysEat), consumable.build())
-
-                    if (convertTo != null) {
-                        properties = properties.usingConvertsTo(convertTo.get())
-                    }
+                        .food(
+                            if (useDurationSeconds == 1.6f) food
+                            else FoodProperties(food.nutrition, food.saturation, food.canAlwaysEat, useDurationSeconds, food.usingConvertsTo, food.effects),
+                        )
                     if (cooldown != null) {
                         properties = properties.useCooldown(cooldown)
                     }
-
                     properties
                 }
                 .customProp(CustomItemProperties.Builder().compostableChance(compostableChance).build())
@@ -86,11 +105,11 @@ object Food {
         saturation = 1.0f,
         alwaysEat = true,
         effects = listOf(
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.REGENERATION, 20 * 20, 2)),
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.ABSORPTION, 180 * 20, 2)),
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.RESISTANCE, 120 * 20, 0)),
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.FIRE_RESISTANCE, 120 * 20, 0)),
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.STRENGTH, 180 * 20, 0)),
+            FoodEffect(MobEffectInstance(MobEffects.REGENERATION, 20 * 20, 2)),
+            FoodEffect(MobEffectInstance(MobEffects.ABSORPTION, 180 * 20, 2)),
+            FoodEffect(MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 120 * 20, 0)),
+            FoodEffect(MobEffectInstance(MobEffects.FIRE_RESISTANCE, 120 * 20, 0)),
+            FoodEffect(MobEffectInstance(MobEffects.DAMAGE_BOOST, 180 * 20, 0)),
         ),
     )
 
@@ -104,14 +123,14 @@ object Food {
         alwaysEat = true,
         glint = true,
         effects = listOf(
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.REGENERATION, 20 * 20, 2)),
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.ABSORPTION, 180 * 20, 2)),
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.RESISTANCE, 120 * 20, 1)),
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.FIRE_RESISTANCE, 120 * 20, 0)),
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.STRENGTH, 180 * 20, 0)),
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.NIGHT_VISION, 180 * 20, 0)),
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.HASTE, 180 * 20, 0)),
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.JUMP_BOOST, 180 * 20, 1)),
+            FoodEffect(MobEffectInstance(MobEffects.REGENERATION, 20 * 20, 2)),
+            FoodEffect(MobEffectInstance(MobEffects.ABSORPTION, 180 * 20, 2)),
+            FoodEffect(MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 120 * 20, 1)),
+            FoodEffect(MobEffectInstance(MobEffects.FIRE_RESISTANCE, 120 * 20, 0)),
+            FoodEffect(MobEffectInstance(MobEffects.DAMAGE_BOOST, 180 * 20, 0)),
+            FoodEffect(MobEffectInstance(MobEffects.NIGHT_VISION, 180 * 20, 0)),
+            FoodEffect(MobEffectInstance(MobEffects.DIG_SPEED, 180 * 20, 0)),
+            FoodEffect(MobEffectInstance(MobEffects.JUMP, 180 * 20, 1)),
         ),
     )
 
@@ -124,12 +143,12 @@ object Food {
         saturation = 1.0f,
         alwaysEat = true,
         effects = listOf(
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.HERO_OF_THE_VILLAGE, 180 * 20, 0)),
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.HASTE, 180 * 20, 1)),
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.SPEED, 180 * 20, 0)),
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.NIGHT_VISION, 180 * 20, 0)),
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.STRENGTH, 180 * 20, 1)),
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.RESISTANCE, 180 * 20, 0)),
+            FoodEffect(MobEffectInstance(MobEffects.HERO_OF_THE_VILLAGE, 180 * 20, 0)),
+            FoodEffect(MobEffectInstance(MobEffects.DIG_SPEED, 180 * 20, 1)),
+            FoodEffect(MobEffectInstance(MobEffects.MOVEMENT_SPEED, 180 * 20, 0)),
+            FoodEffect(MobEffectInstance(MobEffects.NIGHT_VISION, 180 * 20, 0)),
+            FoodEffect(MobEffectInstance(MobEffects.DAMAGE_BOOST, 180 * 20, 1)),
+            FoodEffect(MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 180 * 20, 0)),
         ),
     )
 
@@ -143,14 +162,14 @@ object Food {
         alwaysEat = true,
         glint = true,
         effects = listOf(
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.HERO_OF_THE_VILLAGE, 180 * 20, 0)),
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.HASTE, 180 * 20, 1)),
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.SPEED, 180 * 20, 2)),
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.NIGHT_VISION, 180 * 20, 0)),
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.STRENGTH, 180 * 20, 1)),
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.RESISTANCE, 180 * 20, 1)),
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.JUMP_BOOST, 180 * 20, 0)),
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.SATURATION, 60 * 20, 0)),
+            FoodEffect(MobEffectInstance(MobEffects.HERO_OF_THE_VILLAGE, 180 * 20, 0)),
+            FoodEffect(MobEffectInstance(MobEffects.DIG_SPEED, 180 * 20, 1)),
+            FoodEffect(MobEffectInstance(MobEffects.MOVEMENT_SPEED, 180 * 20, 2)),
+            FoodEffect(MobEffectInstance(MobEffects.NIGHT_VISION, 180 * 20, 0)),
+            FoodEffect(MobEffectInstance(MobEffects.DAMAGE_BOOST, 180 * 20, 1)),
+            FoodEffect(MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 180 * 20, 1)),
+            FoodEffect(MobEffectInstance(MobEffects.JUMP, 180 * 20, 0)),
+            FoodEffect(MobEffectInstance(MobEffects.SATURATION, 60 * 20, 0)),
         ),
     )
 
@@ -163,8 +182,8 @@ object Food {
         saturation = 1.0f,
         alwaysEat = true,
         effects = listOf(
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.ABSORPTION, 120 * 20, 0)),
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.RESISTANCE, 120 * 20, 0)),
+            FoodEffect(MobEffectInstance(MobEffects.ABSORPTION, 120 * 20, 0)),
+            FoodEffect(MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 120 * 20, 0)),
         ),
     )
 
@@ -178,10 +197,10 @@ object Food {
         alwaysEat = true,
         glint = true,
         effects = listOf(
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.RESISTANCE, 120 * 20, 1)),
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.ABSORPTION, 120 * 20, 1)),
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.REGENERATION, 60 * 20, 1)),
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.HEALTH_BOOST, 150 * 20, 1)),
+            FoodEffect(MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 120 * 20, 1)),
+            FoodEffect(MobEffectInstance(MobEffects.ABSORPTION, 120 * 20, 1)),
+            FoodEffect(MobEffectInstance(MobEffects.REGENERATION, 60 * 20, 1)),
+            FoodEffect(MobEffectInstance(MobEffects.HEALTH_BOOST, 150 * 20, 1)),
         ),
     )
 
@@ -195,9 +214,9 @@ object Food {
         alwaysEat = true,
         cooldown = 30.0f,
         effects = listOf(
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.RESISTANCE, 4 * 20, 6)),
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.SPEED, 20 * 20, 1)),
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.INSTANT_HEALTH, 1, 0)),
+            FoodEffect(MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 4 * 20, 6)),
+            FoodEffect(MobEffectInstance(MobEffects.MOVEMENT_SPEED, 20 * 20, 1)),
+            FoodEffect(MobEffectInstance(MobEffects.HEAL, 1, 0)),
         ),
     )
 
@@ -210,7 +229,7 @@ object Food {
         saturation = 1.0f,
         alwaysEat = true,
         effects = listOf(
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.ABSORPTION, 120 * 20, 0)),
+            FoodEffect(MobEffectInstance(MobEffects.ABSORPTION, 120 * 20, 0)),
         ),
     )
 
@@ -224,9 +243,9 @@ object Food {
         alwaysEat = true,
         glint = true,
         effects = listOf(
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.ABSORPTION, 180 * 20, 2)),
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.NIGHT_VISION, 120 * 20, 0)),
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.REGENERATION, 180 * 20, 0)),
+            FoodEffect(MobEffectInstance(MobEffects.ABSORPTION, 180 * 20, 2)),
+            FoodEffect(MobEffectInstance(MobEffects.NIGHT_VISION, 120 * 20, 0)),
+            FoodEffect(MobEffectInstance(MobEffects.REGENERATION, 180 * 20, 0)),
         ),
     )
 
@@ -239,11 +258,11 @@ object Food {
         saturation = 1.0f,
         alwaysEat = true,
         effects = listOf(
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.HUNGER, 10 * 20, 1)),
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.POISON, 10 * 20, 2)),
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.STRENGTH, 10 * 20, 7)),
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.NAUSEA, 10 * 20, 0)),
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.SLOWNESS, 10 * 20, 2)),
+            FoodEffect(MobEffectInstance(MobEffects.HUNGER, 10 * 20, 1)),
+            FoodEffect(MobEffectInstance(MobEffects.POISON, 10 * 20, 2)),
+            FoodEffect(MobEffectInstance(MobEffects.DAMAGE_BOOST, 10 * 20, 7)),
+            FoodEffect(MobEffectInstance(MobEffects.CONFUSION, 10 * 20, 0)),
+            FoodEffect(MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 10 * 20, 2)),
         ),
     )
 
@@ -260,7 +279,7 @@ object Food {
         stackSize = 1,
         convertTo = Supplier { Items.GLASS_BOTTLE },
         effects = listOf(
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.HASTE, 300 * 20, 0)),
+            FoodEffect(MobEffectInstance(MobEffects.DIG_SPEED, 300 * 20, 0)),
         ),
     )
 
@@ -277,7 +296,7 @@ object Food {
         stackSize = 1,
         convertTo = Supplier { Items.GLASS_BOTTLE },
         effects = listOf(
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.RESISTANCE, 300 * 20, 0)),
+            FoodEffect(MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 300 * 20, 0)),
         ),
     )
 
@@ -292,7 +311,7 @@ object Food {
         drink = true,
         convertTo = Supplier { Material.WINE_GLASS.get() },
         effects = listOf(
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.NAUSEA, 60 * 20, 0), 0.3f),
+            FoodEffect(MobEffectInstance(MobEffects.CONFUSION, 60 * 20, 0), 0.3f),
         ),
     )
 
@@ -315,8 +334,8 @@ object Food {
         alwaysEat = true,
         cooldown = 60.0f,
         effects = listOf(
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.RESISTANCE, 4 * 20, 4)),
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.SLOWNESS, 4 * 20, 4)),
+            FoodEffect(MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 4 * 20, 4)),
+            FoodEffect(MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 4 * 20, 4)),
         ),
     )
 
@@ -336,16 +355,16 @@ object Food {
         alwaysEat = true,
         drink = true,
         effects = listOf(
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.HERO_OF_THE_VILLAGE, 600 * 20, 0)),
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.HASTE, 600 * 20, 1)),
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.SPEED, 600 * 20, 0)),
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.NIGHT_VISION, 600 * 20, 0)),
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.STRENGTH, 600 * 20, 0)),
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.RESISTANCE, 600 * 20, 0)),
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.FIRE_RESISTANCE, 600 * 20, 0)),
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.WATER_BREATHING, 600 * 20, 0)),
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.REGENERATION, 600 * 20, 0)),
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.ABSORPTION, 600 * 20, 0)),
+            FoodEffect(MobEffectInstance(MobEffects.HERO_OF_THE_VILLAGE, 600 * 20, 0)),
+            FoodEffect(MobEffectInstance(MobEffects.DIG_SPEED, 600 * 20, 1)),
+            FoodEffect(MobEffectInstance(MobEffects.MOVEMENT_SPEED, 600 * 20, 0)),
+            FoodEffect(MobEffectInstance(MobEffects.NIGHT_VISION, 600 * 20, 0)),
+            FoodEffect(MobEffectInstance(MobEffects.DAMAGE_BOOST, 600 * 20, 0)),
+            FoodEffect(MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 600 * 20, 0)),
+            FoodEffect(MobEffectInstance(MobEffects.FIRE_RESISTANCE, 600 * 20, 0)),
+            FoodEffect(MobEffectInstance(MobEffects.WATER_BREATHING, 600 * 20, 0)),
+            FoodEffect(MobEffectInstance(MobEffects.REGENERATION, 600 * 20, 0)),
+            FoodEffect(MobEffectInstance(MobEffects.ABSORPTION, 600 * 20, 0)),
         ),
     )
 
@@ -355,7 +374,7 @@ object Food {
         nutrition = 5,
         saturation = 0.5f,
         effects = listOf(
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.NAUSEA, 15 * 20, 0)),
+            FoodEffect(MobEffectInstance(MobEffects.CONFUSION, 15 * 20, 0)),
         ),
     )
 
@@ -382,9 +401,7 @@ object Food {
         nutrition = 3,
         saturation = 0.6f,
         alwaysEat = true,
-        effects = listOf(
-            RemoveStatusEffectsConsumeEffect(MobEffects.POISON),
-        ),
+        cures = listOf(MobEffects.POISON),
     )
 
     @JvmField
@@ -393,7 +410,7 @@ object Food {
         nutrition = 2,
         saturation = 0.5f,
         effects = listOf(
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.REGENERATION, 5 * 20, 1)),
+            FoodEffect(MobEffectInstance(MobEffects.REGENERATION, 5 * 20, 1)),
         ),
     )
 
@@ -403,9 +420,7 @@ object Food {
         nutrition = 1,
         saturation = 0.5f,
         alwaysEat = true,
-        effects = listOf(
-            RemoveStatusEffectsConsumeEffect(MobEffects.NAUSEA),
-        ),
+        cures = listOf(MobEffects.CONFUSION),
     )
 
     @JvmField
@@ -414,8 +429,8 @@ object Food {
         nutrition = 3,
         saturation = 0.5f,
         effects = listOf(
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.POISON, 10 * 20, 0)),
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.NAUSEA, 30 * 20, 0)),
+            FoodEffect(MobEffectInstance(MobEffects.POISON, 10 * 20, 0)),
+            FoodEffect(MobEffectInstance(MobEffects.CONFUSION, 30 * 20, 0)),
         ),
     )
 
@@ -432,9 +447,9 @@ object Food {
         nutrition = 2,
         saturation = 0.4f,
         effects = listOf(
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.POISON, 10 * 20, 0)),
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.NAUSEA, 30 * 20, 0)),
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.WITHER, 10 * 20, 0)),
+            FoodEffect(MobEffectInstance(MobEffects.POISON, 10 * 20, 0)),
+            FoodEffect(MobEffectInstance(MobEffects.CONFUSION, 30 * 20, 0)),
+            FoodEffect(MobEffectInstance(MobEffects.WITHER, 10 * 20, 0)),
         ),
     )
 
@@ -466,8 +481,8 @@ object Food {
         nutrition = 3,
         saturation = 0.5f,
         effects = listOf(
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.POISON, 15 * 20, 0)),
-            ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.NAUSEA, 20 * 20, 0)),
+            FoodEffect(MobEffectInstance(MobEffects.POISON, 15 * 20, 0)),
+            FoodEffect(MobEffectInstance(MobEffects.CONFUSION, 20 * 20, 0)),
         ),
     )
 

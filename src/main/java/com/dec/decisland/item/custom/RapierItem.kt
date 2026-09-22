@@ -3,12 +3,12 @@ package com.dec.decisland.item.custom
 import com.dec.decisland.network.Networking
 import net.minecraft.core.component.DataComponents
 import net.minecraft.nbt.CompoundTag
-import net.minecraft.resources.Identifier
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.stats.Stats
 import net.minecraft.world.InteractionHand
-import net.minecraft.world.InteractionResult
+import net.minecraft.world.InteractionResultHolder
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.EquipmentSlot
 import net.minecraft.world.entity.LivingEntity
@@ -29,10 +29,10 @@ class RapierItem(
     properties: Properties,
     private val config: RapierConfig,
 ) : Item(properties) {
-    override fun use(level: Level, player: Player, hand: InteractionHand): InteractionResult {
+    override fun use(level: Level, player: Player, hand: InteractionHand): InteractionResultHolder<ItemStack> {
         val stack = player.getItemInHand(hand)
-        if (player.cooldowns.isOnCooldown(stack)) {
-            return InteractionResult.FAIL
+        if (player.cooldowns.isOnCooldown(stack.item)) {
+            return InteractionResultHolder.fail(stack)
         }
 
         if (level.isClientSide) {
@@ -44,14 +44,14 @@ class RapierItem(
         }
 
         player.swing(hand, true)
-        return InteractionResult.SUCCESS_SERVER
+        return InteractionResultHolder.sidedSuccess(stack, level.isClientSide)
     }
 
-    override fun hurtEnemy(stack: ItemStack, target: LivingEntity, attacker: LivingEntity) {
+    override fun hurtEnemy(stack: ItemStack, target: LivingEntity, attacker: LivingEntity): Boolean {
         val player = attacker as? Player
         if (player != null && !player.level().isClientSide && player.level() is ServerLevel) {
             val tag = readTag(stack)
-            val count = tag.getIntOr(TAG_SKILL_COUNT, 0)
+            val count = tag.getInt(TAG_SKILL_COUNT)
             if (count > config.comboThreshold) {
                 performLunge(player.level() as ServerLevel, player, stack, combo = true, notifyClient = true)
             } else {
@@ -59,19 +59,20 @@ class RapierItem(
                 writeTag(stack, tag)
             }
         }
-        super.hurtEnemy(stack, target, attacker)
+        return super.hurtEnemy(stack, target, attacker)
     }
 
     // Drives the dash window: collision pulses every 4 ticks and the trailing particles.
-    override fun inventoryTick(stack: ItemStack, level: ServerLevel, entity: Entity, slot: EquipmentSlot?) {
-        super.inventoryTick(stack, level, entity, slot)
+    override fun inventoryTick(stack: ItemStack, level: Level, entity: Entity, slotId: Int, isSelected: Boolean) {
+        super.inventoryTick(stack, level, entity, slotId, isSelected)
+        val serverLevel = level as? ServerLevel ?: return
         val player = entity as? Player ?: return
         val tag = readTag(stack)
         if (!tag.contains(TAG_LUNGE_START)) {
             return
         }
 
-        val elapsed = level.gameTime - tag.getLongOr(TAG_LUNGE_START, 0L)
+        val elapsed = serverLevel.gameTime - tag.getLong(TAG_LUNGE_START)
         if (elapsed >= LUNGE_DURATION_TICKS) {
             tag.remove(TAG_LUNGE_START)
             tag.remove(TAG_LUNGE_COMBO)
@@ -82,14 +83,14 @@ class RapierItem(
             return
         }
 
-        val combo = tag.getBooleanOr(TAG_LUNGE_COMBO, false)
+        val combo = tag.getBoolean(TAG_LUNGE_COMBO)
         if (config.pulseDamage > 0.0f && elapsed % PULSE_INTERVAL_TICKS == 0L) {
-            dealPulseDamage(level, player, if (combo) config.comboPulseDamage else config.pulseDamage)
+            dealPulseDamage(serverLevel, player, if (combo) config.comboPulseDamage else config.pulseDamage)
         }
 
         val trailParticleId = config.trailParticleId
         if (trailParticleId != null && elapsed < config.trailDurationTicks) {
-            Networking.sendBedrockEmitterToNearby(level, trailParticleId, player.position(), 64.0, 1)
+            Networking.sendBedrockEmitterToNearby(serverLevel, trailParticleId, player.position(), 64.0, 1)
         }
     }
 
@@ -152,7 +153,7 @@ class RapierItem(
             .forEach { target ->
                 val originalInvulnerableTime = target.invulnerableTime
                 target.invulnerableTime = 0
-                val hurt = target.hurtServer(serverLevel, source, damage)
+                val hurt = target.hurt(source, damage)
                 if (!hurt) {
                     target.invulnerableTime = originalInvulnerableTime
                 }
@@ -182,7 +183,7 @@ class RapierItem(
         val magicPulse: Boolean = builder.magicPulse
 
         @JvmField
-        val trailParticleId: Identifier? = builder.trailParticleId
+        val trailParticleId: ResourceLocation? = builder.trailParticleId
 
         @JvmField
         val trailDurationTicks: Int = builder.trailDurationTicks
@@ -203,7 +204,7 @@ class RapierItem(
             internal var pulseDamage: Float = 0.0f
             internal var comboPulseDamage: Float = 0.0f
             internal var magicPulse: Boolean = false
-            internal var trailParticleId: Identifier? = null
+            internal var trailParticleId: ResourceLocation? = null
             internal var trailDurationTicks: Int = 0
             internal val auraEffects = mutableListOf<SickleItem.EffectConfig>()
             internal val comboAuraEffects = mutableListOf<SickleItem.EffectConfig>()
@@ -215,7 +216,7 @@ class RapierItem(
                 magicPulse = magic
             }
 
-            fun trailParticle(trailParticleId: Identifier?, durationTicks: Int): Builder = apply {
+            fun trailParticle(trailParticleId: ResourceLocation?, durationTicks: Int): Builder = apply {
                 this.trailParticleId = trailParticleId
                 trailDurationTicks = durationTicks
             }

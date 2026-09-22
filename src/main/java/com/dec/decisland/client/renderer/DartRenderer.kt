@@ -1,59 +1,55 @@
 package com.dec.decisland.client.renderer
 
-import com.dec.decisland.client.renderer.state.DartRenderState
 import com.dec.decisland.entity.projectile.dart.DartEntity
 import com.mojang.blaze3d.vertex.PoseStack
 import com.mojang.math.Axis
-import net.minecraft.client.renderer.SubmitNodeCollector
+import net.minecraft.client.renderer.MultiBufferSource
 import net.minecraft.client.renderer.entity.EntityRenderer
 import net.minecraft.client.renderer.entity.EntityRendererProvider
-import net.minecraft.client.renderer.item.ItemModelResolver
-import net.minecraft.client.renderer.state.CameraRenderState
 import net.minecraft.client.renderer.texture.OverlayTexture
+import net.minecraft.client.renderer.texture.TextureAtlas
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.util.Mth
 import net.minecraft.world.item.ItemDisplayContext
-import net.minecraft.world.phys.Vec3
 
-class DartRenderer(context: EntityRendererProvider.Context) :
-    EntityRenderer<DartEntity, DartRenderState>(context) {
-    private val itemModelResolver: ItemModelResolver = context.itemModelResolver
+class DartRenderer(context: EntityRendererProvider.Context) : EntityRenderer<DartEntity>(context) {
+    private val itemRenderer = context.itemRenderer
 
     init {
         shadowRadius = 0.0f
         shadowStrength = 0.0f
     }
 
-    override fun createRenderState(): DartRenderState = DartRenderState()
+    override fun getTextureLocation(entity: DartEntity): ResourceLocation = TextureAtlas.LOCATION_BLOCKS
 
-    override fun extractRenderState(entity: DartEntity, reusedState: DartRenderState, partialTick: Float) {
-        super.extractRenderState(entity, reusedState, partialTick)
-        reusedState.xRot = Mth.rotLerp(partialTick, entity.xRotO, entity.xRot)
-        reusedState.yRot = Mth.rotLerp(partialTick, entity.yRotO, entity.yRot)
-        reusedState.spin = Mth.rotLerp(partialTick, entity.spinRotationO, entity.spinRotation)
-        reusedState.randomTilt = entity.randomTilt
-        itemModelResolver.updateForNonLiving(reusedState.item, entity.item, ItemDisplayContext.FIXED, entity)
-    }
-
-    override fun submit(
-        renderState: DartRenderState,
+    override fun render(
+        entity: DartEntity,
+        entityYaw: Float,
+        partialTick: Float,
         poseStack: PoseStack,
-        submitNodeCollector: SubmitNodeCollector,
-        cameraRenderState: CameraRenderState,
+        bufferSource: MultiBufferSource,
+        packedLight: Int,
     ) {
         poseStack.pushPose()
-        poseStack.mulPose(Axis.YP.rotationDegrees(renderState.yRot - 90.0f))
-        poseStack.mulPose(Axis.XP.rotationDegrees(renderState.randomTilt))
-        poseStack.mulPose(Axis.ZP.rotationDegrees(renderState.xRot - renderState.spin))
-        renderState.item.submit(
-            poseStack,
-            submitNodeCollector,
-            renderState.lightCoords,
+        poseStack.mulPose(Axis.YP.rotationDegrees(Mth.rotLerp(partialTick, entity.yRotO, entity.yRot) - 90.0f))
+        poseStack.mulPose(Axis.XP.rotationDegrees(entity.randomTilt))
+        poseStack.mulPose(
+            Axis.ZP.rotationDegrees(
+                Mth.rotLerp(partialTick, entity.xRotO, entity.xRot) -
+                    Mth.rotLerp(partialTick, entity.spinRotationO, entity.spinRotation),
+            ),
+        )
+        itemRenderer.renderStatic(
+            entity.item,
+            ItemDisplayContext.FIXED,
+            packedLight,
             OverlayTexture.NO_OVERLAY,
-            renderState.outlineColor,
+            poseStack,
+            bufferSource,
+            entity.level(),
+            entity.id,
         )
         poseStack.popPose()
-        super.submit(renderState, poseStack, submitNodeCollector, cameraRenderState)
+        super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight)
     }
-
-    override fun getRenderOffset(renderState: DartRenderState): Vec3 = Vec3.ZERO
 }

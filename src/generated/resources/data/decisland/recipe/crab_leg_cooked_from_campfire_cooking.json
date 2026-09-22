@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:campfire_cooking",
+  "category": "food",
+  "cookingtime": 600,
+  "experience": 0.35,
+  "ingredient": {
+    "item": "decisland:crab_leg"
+  },
+  "result": {
+    "count": 1,
+    "id": "decisland:crab_leg_cooked"
+  }
+}

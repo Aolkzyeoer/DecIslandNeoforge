@@ -5,15 +5,20 @@ import com.dec.decisland.item.ModItems
 import com.dec.decisland.tag.ModItemTags
 import net.minecraft.core.HolderLookup
 import net.minecraft.data.PackOutput
+import net.minecraft.data.tags.ItemTagsProvider
+import net.minecraft.data.tags.TagsProvider
 import net.minecraft.tags.ItemTags
 import net.minecraft.world.item.Items
-import net.neoforged.neoforge.common.data.ItemTagsProvider
+import net.minecraft.world.level.block.Block
+import net.neoforged.neoforge.common.data.ExistingFileHelper
 import java.util.concurrent.CompletableFuture
 
 class ModItemTagsProvider(
     output: PackOutput,
     lookupProvider: CompletableFuture<HolderLookup.Provider>,
-) : ItemTagsProvider(output, lookupProvider, DecIsland.MOD_ID) {
+    blockTags: CompletableFuture<TagsProvider.TagLookup<Block>>,
+    existingFileHelper: ExistingFileHelper?,
+) : ItemTagsProvider(output, lookupProvider, blockTags, DecIsland.MOD_ID, existingFileHelper) {
     override fun addTags(provider: HolderLookup.Provider) {
         ModItems.getItemConfigs().forEach { config ->
             val item = ModItems.getItemByConfig(config) ?: return@forEach

@@ -20,7 +20,6 @@ import net.minecraft.world.food.FoodProperties
 import net.minecraft.world.item.BlockItem
 import net.minecraft.world.item.CreativeModeTab
 import net.minecraft.world.item.Item
-import net.minecraft.world.item.component.Consumables
 import net.minecraft.world.level.block.Block
 import net.neoforged.neoforge.registries.DeferredBlock
 import net.neoforged.neoforge.registries.DeferredItem
@@ -43,8 +42,7 @@ object Crop {
             ItemConfig.Builder(name)
                 .props {
                     Item.Properties().food(
-                        FoodProperties(nutrition, saturation, false),
-                        Consumables.defaultFood().consumeSeconds(1.6f).build(),
+                        FoodProperties.Builder().nutrition(nutrition).saturationModifier(saturation).build(),
                     )
                 }
                 .customProp(CustomItemProperties.Builder().compostableChance(compostableChance).build())
@@ -173,8 +171,7 @@ object Crop {
             .func { props -> BlockItem(SOYBEAN_CROP.get(), props) }
             .props {
                 Item.Properties().food(
-                    FoodProperties(1, 0.5f, false),
-                    Consumables.defaultFood().build(),
+                    FoodProperties.Builder().nutrition(1).saturationModifier(0.5f).build(),
                 )
             }
             .customProp(CustomItemProperties.Builder().compostableChance(0.3f).build())

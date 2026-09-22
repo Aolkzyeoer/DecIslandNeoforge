@@ -41,7 +41,7 @@ base {
     archivesName = mod_id
 }
 
-// Mojang ships Java 21 to end users in 1.21.11, so mods should target Java 21.
+// Minecraft 1.21.1 requires Java 21, so the project targets Java 21.
 java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
 neoForge {
@@ -59,6 +59,13 @@ neoForge {
     // Default run configurations.
     // These can be tweaked, removed, or duplicated as needed.
     runs {
+        // MC <= 1.21.3: BootstrapLauncher starts the game with isolated classloaders that
+        // cannot see the JVM -cp, so non-mod library dependencies (e.g. the Kotlin stdlib)
+        // must be put on each run's legacy classpath to be visible at runtime.
+        configureEach { run ->
+            run.additionalRuntimeClasspathConfiguration.extendsFrom(configurations.implementation)
+        }
+
         client {
             client()
 
@@ -81,7 +88,7 @@ neoForge {
         }
 
         data {
-            clientData()
+            data()
 
             // example of overriding the workingDirectory set in configureEach above, uncomment if you want to use it
             // gameDirectory = project.file('run-data')

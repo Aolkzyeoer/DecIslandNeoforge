@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cross",
+  "textures": {
+    "cross": "decisland:block/experience_flower_crop_stage0"
+  }
+}

@@ -1,10 +1,8 @@
 package com.dec.decisland.datagen.RecipeProvider
 
-import net.minecraft.resources.ResourceKey
+import net.minecraft.world.item.crafting.Ingredient
 import net.minecraft.tags.TagKey
 import net.minecraft.world.item.Item
-import net.minecraft.world.item.crafting.Ingredient
-import net.minecraft.world.item.equipment.trim.TrimPattern
 import net.minecraft.world.level.ItemLike
 
 class SmithingTrimRecipeConfig private constructor(builder: Builder) : RecipeConfig(builder) {
@@ -17,16 +15,12 @@ class SmithingTrimRecipeConfig private constructor(builder: Builder) : RecipeCon
     @JvmField
     val addition: RecipeIngredient = builder.addition ?: error("Recipe '$name' is missing an addition ingredient")
 
-    @JvmField
-    val trimPattern: ResourceKey<TrimPattern> = builder.trimPattern ?: error("Recipe '$name' is missing a trim pattern")
-
     class Builder(
         name: String,
     ) : RecipeConfig.Builder<Builder>(name) {
         internal var template: RecipeIngredient? = null
         internal var base: RecipeIngredient? = null
         internal var addition: RecipeIngredient? = null
-        internal var trimPattern: ResourceKey<TrimPattern>? = null
 
         fun template(item: ItemLike): Builder = template(RecipeIngredient.of(item))
 
@@ -56,10 +50,6 @@ class SmithingTrimRecipeConfig private constructor(builder: Builder) : RecipeCon
 
         fun addition(ingredient: RecipeIngredient): Builder = apply {
             this.addition = ingredient
-        }
-
-        fun trimPattern(trimPattern: ResourceKey<TrimPattern>): Builder = apply {
-            this.trimPattern = trimPattern
         }
 
         fun build(): SmithingTrimRecipeConfig = SmithingTrimRecipeConfig(this)

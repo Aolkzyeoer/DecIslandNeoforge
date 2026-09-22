@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "axis=x": {
+      "model": "decisland:block/lurk_log",
+      "x": 90,
+      "y": 90
+    },
+    "axis=y": {
+      "model": "decisland:block/lurk_log"
+    },
+    "axis=z": {
+      "model": "decisland:block/lurk_log",
+      "x": 90
+    }
+  }
+}

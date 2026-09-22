@@ -4,7 +4,7 @@ import com.dec.decisland.DecIsland
 import com.dec.decisland.block.ModBlocks
 import com.dec.decisland.entity.ModEntities
 import net.minecraft.core.BlockPos
-import net.minecraft.resources.Identifier
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.EntityType
@@ -26,10 +26,10 @@ class GrowingEnergyRay(entityType: EntityType<GrowingEnergyRay>, level: Level) :
     override val baseDamage: Float = 6.0f
     override val airInertia: Double = 1.0
     override val waterInertia: Double = 1.0
-    override val trailParticleId: Identifier =
-        Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "flower_ghost_block_particle")
-    override val hitParticleIds: List<Identifier> =
-        listOf(Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "flower_ghost_block_particle"))
+    override val trailParticleId: ResourceLocation =
+        ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "flower_ghost_block_particle")
+    override val hitParticleIds: List<ResourceLocation> =
+        listOf(ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "flower_ghost_block_particle"))
 
     override fun onEntityDamaged(serverLevel: ServerLevel, target: Entity) {
         placeFlowerGhostBlock(serverLevel, target.position())

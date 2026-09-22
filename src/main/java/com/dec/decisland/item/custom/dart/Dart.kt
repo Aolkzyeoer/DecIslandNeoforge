@@ -10,7 +10,7 @@ import net.minecraft.sounds.SoundEvents
 import net.minecraft.sounds.SoundSource
 import net.minecraft.stats.Stats
 import net.minecraft.world.InteractionHand
-import net.minecraft.world.InteractionResult
+import net.minecraft.world.InteractionResultHolder
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.entity.projectile.Projectile
 import net.minecraft.world.item.Item
@@ -23,10 +23,10 @@ class Dart(
     properties: Item.Properties,
     private val definition: DartDefinition,
 ) : Item(properties), ProjectileItem {
-    override fun use(level: Level, player: Player, hand: InteractionHand): InteractionResult {
+    override fun use(level: Level, player: Player, hand: InteractionHand): InteractionResultHolder<ItemStack> {
         val itemStack = player.getItemInHand(hand)
-        if (player.cooldowns.isOnCooldown(itemStack)) {
-            return InteractionResult.FAIL
+        if (player.cooldowns.isOnCooldown(itemStack.item)) {
+            return InteractionResultHolder.fail(itemStack)
         }
 
         level.playSound(
@@ -55,11 +55,11 @@ class Dart(
         }
 
         player.awardStat(Stats.ITEM_USED.get(this))
-        player.cooldowns.addCooldown(itemStack, definition.itemSettings.cooldownTicks)
+        player.cooldowns.addCooldown(itemStack.item, definition.itemSettings.cooldownTicks)
         AccessoryCombatEffects.onSuccessfulWeaponUse(player, itemStack)
         player.swing(hand, true)
         itemStack.consume(1, player)
-        return if (level.isClientSide) InteractionResult.SUCCESS else InteractionResult.SUCCESS_SERVER
+        return InteractionResultHolder.sidedSuccess(itemStack, level.isClientSide)
     }
 
     override fun asProjectile(level: Level, position: Position, itemStack: ItemStack, direction: Direction): Projectile =

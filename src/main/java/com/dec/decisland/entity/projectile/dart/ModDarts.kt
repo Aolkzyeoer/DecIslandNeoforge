@@ -1,9 +1,9 @@
-package com.dec.decisland.entity.projectile.dart
+﻿package com.dec.decisland.entity.projectile.dart
 
 import com.dec.decisland.DecIsland
 import com.dec.decisland.entity.projectile.SnowEnergy
 import com.dec.decisland.item.custom.dart.DartItemSettings
-import net.minecraft.resources.Identifier
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.sounds.SoundEvents
 import net.minecraft.world.effect.MobEffectInstance
@@ -78,7 +78,7 @@ object ModDarts {
             baseDamage = 7.0f,
             gravity = 0.03,
             bedrockInertia = 1.1,
-            effectOnHit = { MobEffectInstance(MobEffects.SLOWNESS, 200, 1) },
+            effectOnHit = { MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 200, 1) },
         ),
         itemSettings = DartItemSettings(
             power = 2.1f,
@@ -106,7 +106,7 @@ object ModDarts {
         cooldownTicks = 10,
         gravity = 0.03,
         bedrockInertia = 1.1,
-        effectOnHit = { MobEffectInstance(MobEffects.SLOWNESS, 100, 0) },
+        effectOnHit = { MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 100, 0) },
     )
 
     @JvmField
@@ -268,7 +268,7 @@ object ModDarts {
         VOID_WHISPERING_DAGGER,
     )
 
-    private fun id(path: String): Identifier = Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, path)
+    private fun id(path: String): ResourceLocation = ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, path)
 
     private fun basicDart(
         path: String,

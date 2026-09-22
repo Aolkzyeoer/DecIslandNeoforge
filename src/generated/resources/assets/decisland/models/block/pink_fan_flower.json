@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cross",
+  "textures": {
+    "cross": "decisland:block/pink_fan_flower"
+  }
+}

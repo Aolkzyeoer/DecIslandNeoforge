@@ -3,11 +3,9 @@
   "package": "com.dec.decisland.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "ItemCooldownsAccessor",
-    "ThrowableProjectileMixin"
+    "ItemCooldownsAccessor"
   ],
   "client": [
-    "client.EquipmentLayerRendererMixin",
     "client.FlintlockAimCameraMixin",
     "client.FlintlockAimCrosshairMixin",
     "client.FlintlockAimFovMixin",

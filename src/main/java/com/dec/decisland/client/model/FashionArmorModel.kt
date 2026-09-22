@@ -11,22 +11,21 @@ import net.minecraft.client.model.HumanoidModel
 import net.minecraft.client.model.geom.ModelLayerLocation
 import net.minecraft.client.model.geom.ModelPart
 import net.minecraft.client.model.geom.PartPose
-import net.minecraft.client.renderer.SubmitNodeCollector
-import net.minecraft.client.renderer.rendertype.RenderTypes
 import net.minecraft.client.model.geom.builders.CubeDeformation
 import net.minecraft.client.model.geom.builders.CubeListBuilder
 import net.minecraft.client.model.geom.builders.LayerDefinition
 import net.minecraft.client.model.geom.builders.MeshDefinition
 import net.minecraft.client.model.geom.builders.PartDefinition
-import net.minecraft.client.renderer.entity.state.HumanoidRenderState
-import net.minecraft.resources.Identifier
+import net.minecraft.client.renderer.MultiBufferSource
+import net.minecraft.resources.ResourceLocation
+import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.item.ItemStack
 import kotlin.math.PI
 
-class FashionArmorModel<T : HumanoidRenderState>(root: ModelPart) : HumanoidModel<T>(root) {
+class FashionArmorModel<T : LivingEntity>(root: ModelPart) : HumanoidModel<T>(root) {
     fun submitTextureMeshSides(
         poseStack: PoseStack,
-        collector: SubmitNodeCollector,
+        bufferSource: MultiBufferSource,
         packedLight: Int,
         itemStack: ItemStack,
     ) {
@@ -66,29 +65,29 @@ class FashionArmorModel<T : HumanoidRenderState>(root: ModelPart) : HumanoidMode
         val FOLLOWING_PARTICLE_LAYER_LOCATION: ModelLayerLocation =
             layerLocation("fashion_following_particle")
 
-        private val CLOTHES_GEOMETRY: Identifier =
-            Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "bedrock/models/armor/fashion_clothes.geometry.json")
+        private val CLOTHES_GEOMETRY: ResourceLocation =
+            ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "bedrock/models/armor/fashion_clothes.geometry.json")
 
-        private val CLOTHES_WITH_HOOD_GEOMETRY: Identifier =
-            Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "bedrock/models/armor/fashion_clothes_with_hood.geometry.json")
+        private val CLOTHES_WITH_HOOD_GEOMETRY: ResourceLocation =
+            ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "bedrock/models/armor/fashion_clothes_with_hood.geometry.json")
 
-        private val HAT_GEOMETRY: Identifier =
-            Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "bedrock/models/armor/hat.geometry.json")
+        private val HAT_GEOMETRY: ResourceLocation =
+            ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "bedrock/models/armor/hat.geometry.json")
 
-        private val WITCH_HAT_GEOMETRY: Identifier =
-            Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "bedrock/models/armor/witch_hat.geometry.json")
+        private val WITCH_HAT_GEOMETRY: ResourceLocation =
+            ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "bedrock/models/armor/witch_hat.geometry.json")
 
-        private val CHRISTMAS_CAP_GEOMETRY: Identifier =
-            Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "bedrock/models/armor/christmas_cap.geometry.json")
+        private val CHRISTMAS_CAP_GEOMETRY: ResourceLocation =
+            ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "bedrock/models/armor/christmas_cap.geometry.json")
 
-        private val WINGS_FROM_DEEP_GEOMETRY: Identifier =
-            Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "bedrock/models/armor/wings_from_deep.geometry.json")
+        private val WINGS_FROM_DEEP_GEOMETRY: ResourceLocation =
+            ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "bedrock/models/armor/wings_from_deep.geometry.json")
 
-        private val GIANT_BAT_WINGS_GEOMETRY: Identifier =
-            Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "bedrock/models/armor/giant_bat_wings.geometry.json")
+        private val GIANT_BAT_WINGS_GEOMETRY: ResourceLocation =
+            ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "bedrock/models/armor/giant_bat_wings.geometry.json")
 
-        private val FOLLOWING_PARTICLE_GEOMETRY: Identifier =
-            Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "bedrock/models/armor/following_particle.geometry.json")
+        private val FOLLOWING_PARTICLE_GEOMETRY: ResourceLocation =
+            ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "bedrock/models/armor/following_particle.geometry.json")
 
         @JvmStatic
         fun createClothesBodyLayer(): LayerDefinition =
@@ -126,9 +125,9 @@ class FashionArmorModel<T : HumanoidRenderState>(root: ModelPart) : HumanoidMode
         fun attachTextureMeshes(root: ModelPart, modelKind: Fashion.ModelKind) {
             val (geometryId, textureId) = when (modelKind) {
                 Fashion.ModelKind.WINGS_FROM_DEEP -> WINGS_FROM_DEEP_GEOMETRY to
-                    Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "textures/armor/fashion/wings_from_deep.png")
+                    ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "textures/armor/fashion/wings_from_deep.png")
                 Fashion.ModelKind.GIANT_BAT_WINGS -> GIANT_BAT_WINGS_GEOMETRY to
-                    Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "textures/armor/fashion/giant_bat_wings.png")
+                    ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "textures/armor/fashion/giant_bat_wings.png")
                 else -> return
             }
 
@@ -144,7 +143,7 @@ class FashionArmorModel<T : HumanoidRenderState>(root: ModelPart) : HumanoidMode
             )
         }
 
-        private fun createClothesBodyLayer(geometryId: Identifier): LayerDefinition {
+        private fun createClothesBodyLayer(geometryId: ResourceLocation): LayerDefinition {
             val geometry = BedrockEntityAssets.geometry(geometryId)
             val meshDefinition = MeshDefinition()
             val root = meshDefinition.root
@@ -188,7 +187,7 @@ class FashionArmorModel<T : HumanoidRenderState>(root: ModelPart) : HumanoidMode
             return LayerDefinition.create(meshDefinition, geometry.textureWidth, geometry.textureHeight)
         }
 
-        private fun createHeadwearBodyLayer(geometryId: Identifier): LayerDefinition {
+        private fun createHeadwearBodyLayer(geometryId: ResourceLocation): LayerDefinition {
             val geometry = BedrockEntityAssets.geometry(geometryId)
             val meshDefinition = MeshDefinition()
             val root = meshDefinition.root
@@ -223,7 +222,7 @@ class FashionArmorModel<T : HumanoidRenderState>(root: ModelPart) : HumanoidMode
         }
 
         private fun createBodyAttachmentLayer(
-            geometryId: Identifier,
+            geometryId: ResourceLocation,
             bodyBoneName: String,
             extraBodyBoneNames: List<String>,
         ): LayerDefinition {
@@ -259,7 +258,7 @@ class FashionArmorModel<T : HumanoidRenderState>(root: ModelPart) : HumanoidMode
         }
 
         private fun createEntityStyleBodyAttachmentLayer(
-            geometryId: Identifier,
+            geometryId: ResourceLocation,
             bodyBoneName: String,
             extraBodyBoneNames: List<String>,
         ): LayerDefinition {
@@ -295,7 +294,7 @@ class FashionArmorModel<T : HumanoidRenderState>(root: ModelPart) : HumanoidMode
         }
 
         private fun createAttachableBodyLayer(
-            geometryId: Identifier,
+            geometryId: ResourceLocation,
             bodyBoneName: String,
             extraBodyBoneNames: List<String>,
         ): LayerDefinition {
@@ -427,7 +426,7 @@ class FashionArmorModel<T : HumanoidRenderState>(root: ModelPart) : HumanoidMode
             )
 
         private fun layerLocation(name: String): ModelLayerLocation =
-            ModelLayerLocation(Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, name), "main")
+            ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, name), "main")
 
         private fun Float.toRadians(): Float = (this * PI.toFloat()) / 180.0f
 

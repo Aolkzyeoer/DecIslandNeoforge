@@ -1,0 +1,50 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "bonus_rolls": 0.0,
+      "conditions": [
+        {
+          "condition": "minecraft:any_of",
+          "terms": [
+            {
+              "block": "decisland:corn_crop",
+              "condition": "minecraft:block_state_property",
+              "properties": {
+                "age": "4",
+                "half": "lower"
+              }
+            },
+            {
+              "block": "decisland:corn_crop",
+              "condition": "minecraft:block_state_property",
+              "properties": {
+                "age": "3",
+                "half": "upper"
+              }
+            }
+          ]
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "add": false,
+              "count": {
+                "type": "minecraft:uniform",
+                "max": 3.0,
+                "min": 1.0
+              },
+              "function": "minecraft:set_count"
+            }
+          ],
+          "name": "decisland:corn"
+        }
+      ],
+      "rolls": 1.0
+    }
+  ],
+  "random_sequence": "decisland:blocks/corn_crop"
+}

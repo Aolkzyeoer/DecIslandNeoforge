@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "decisland:block/compress_flower_block"
+    }
+  }
+}

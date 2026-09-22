@@ -2,14 +2,14 @@ package com.dec.decisland.item.category
 
 import com.dec.decisland.item.ItemConfig
 import com.dec.decisland.item.ModArmorMaterials
+import com.dec.decisland.item.ModArmorMaterials.ModArmorMaterial
 import com.dec.decisland.item.ModCreativeModeTabs
 import com.dec.decisland.item.ModItems
 import net.minecraft.core.registries.BuiltInRegistries
+import net.minecraft.world.item.ArmorItem
 import net.minecraft.world.item.CreativeModeTab
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
-import net.minecraft.world.item.equipment.ArmorMaterial
-import net.minecraft.world.item.equipment.ArmorType
 import net.neoforged.neoforge.registries.DeferredItem
 import java.util.function.Supplier
 
@@ -28,7 +28,7 @@ object Fashion {
 
     data class Definition(
         val name: String,
-        val armorType: ArmorType,
+        val armorType: ArmorItem.Type,
         val modelKind: ModelKind,
     )
 
@@ -44,29 +44,30 @@ object Fashion {
 
     private fun register(
         definition: Definition,
-        material: ArmorMaterial,
+        material: ModArmorMaterial,
         tab: Supplier<CreativeModeTab>,
     ): DeferredItem<Item> {
         definitionsByName[definition.name] = definition
         return ModItems.registerItem(
             ItemConfig.Builder(definition.name)
-                .props { Item.Properties().humanoidArmor(material, definition.armorType) }
+                .func { props -> ArmorItem(material.holder, definition.armorType, props) }
+                .props { Item.Properties().durability(definition.armorType.getDurability(material.durabilityMultiplier)) }
                 .creativeTab(tab)
                 .build(),
         ).also(registeredItems::add)
     }
 
     private fun helmet(name: String, modelKind: ModelKind): DeferredItem<Item> =
-        register(Definition(name, ArmorType.HELMET, modelKind))
+        register(Definition(name, ArmorItem.Type.HELMET, modelKind))
 
     private fun chest(name: String, modelKind: ModelKind): DeferredItem<Item> =
-        register(Definition(name, ArmorType.CHESTPLATE, modelKind))
+        register(Definition(name, ArmorItem.Type.CHESTPLATE, modelKind))
 
     private fun legs(name: String, modelKind: ModelKind): DeferredItem<Item> =
-        register(Definition(name, ArmorType.LEGGINGS, modelKind))
+        register(Definition(name, ArmorItem.Type.LEGGINGS, modelKind))
 
     private fun boots(name: String, modelKind: ModelKind): DeferredItem<Item> =
-        register(Definition(name, ArmorType.BOOTS, modelKind))
+        register(Definition(name, ArmorItem.Type.BOOTS, modelKind))
 
     @JvmStatic
     fun allItems(): Array<Item> = registeredItems.map { it.get() }.toTypedArray()
@@ -217,11 +218,11 @@ object Fashion {
 
     @JvmField
     val PIGLIN_CHESTPLATE: DeferredItem<Item> =
-        register(Definition("piglin_chestplate", ArmorType.CHESTPLATE, ModelKind.CLOTHES), ModArmorMaterials.PIGLIN, Armor.creativeTab)
+        register(Definition("piglin_chestplate", ArmorItem.Type.CHESTPLATE, ModelKind.CLOTHES), ModArmorMaterials.PIGLIN, Armor.creativeTab)
 
     @JvmField
     val PIGLIN_LEGGINGS: DeferredItem<Item> =
-        register(Definition("piglin_leggings", ArmorType.LEGGINGS, ModelKind.CLOTHES), ModArmorMaterials.PIGLIN, Armor.creativeTab)
+        register(Definition("piglin_leggings", ArmorItem.Type.LEGGINGS, ModelKind.CLOTHES), ModArmorMaterials.PIGLIN, Armor.creativeTab)
 
     @JvmStatic
     fun load() {

@@ -21,7 +21,7 @@ import net.minecraft.world.level.storage.loot.predicates.LootItemBlockStatePrope
 import net.minecraft.world.level.storage.loot.providers.number.UniformGenerator
 import net.minecraft.world.level.storage.loot.LootPool
 import net.minecraft.world.level.storage.loot.providers.number.ConstantValue
-import net.minecraft.advancements.criterion.StatePropertiesPredicate
+import net.minecraft.advancements.critereon.StatePropertiesPredicate
 import java.util.function.Function
 
 class ModBlockLootTablesProvider(registries: HolderLookup.Provider) :

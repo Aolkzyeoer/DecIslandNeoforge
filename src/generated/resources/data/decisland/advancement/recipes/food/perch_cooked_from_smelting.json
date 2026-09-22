@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_perch": {
+      "conditions": {
+        "items": [
+          {
+            "items": "decisland:perch"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "decisland:perch_cooked_from_smelting"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_perch"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "decisland:perch_cooked_from_smelting"
+    ]
+  }
+}

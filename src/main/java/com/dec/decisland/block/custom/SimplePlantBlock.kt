@@ -1,5 +1,6 @@
 package com.dec.decisland.block.custom
 
+import com.mojang.serialization.MapCodec
 import net.minecraft.core.BlockPos
 import net.minecraft.world.level.BlockGetter
 import net.minecraft.world.level.block.Block
@@ -17,6 +18,8 @@ class SimplePlantBlock(
 ) : BushBlock(properties) {
     private val shape: VoxelShape = centeredShape(selectionWidth, selectionHeight)
 
+    override fun codec(): MapCodec<out SimplePlantBlock> = CODEC
+
     override fun mayPlaceOn(
         state: BlockState,
         level: BlockGetter,
@@ -28,9 +31,16 @@ class SimplePlantBlock(
         level: BlockGetter,
         pos: BlockPos,
         context: CollisionContext,
-    ): VoxelShape = shape.move(state.getOffset(pos))
+    ): VoxelShape {
+        val offset = state.getOffset(level, pos)
+        return shape.move(offset.x, offset.y, offset.z)
+    }
 
     companion object {
+        val CODEC: MapCodec<SimplePlantBlock> = simpleCodec { props ->
+            SimplePlantBlock(props, { true }, 6.0, 8.0)
+        }
+
         private fun centeredShape(
             width: Double,
             height: Double,

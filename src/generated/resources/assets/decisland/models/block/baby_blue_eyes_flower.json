@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cross",
+  "textures": {
+    "cross": "decisland:block/baby_blue_eyes_flower"
+  }
+}

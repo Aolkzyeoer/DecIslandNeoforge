@@ -1,7 +1,7 @@
 package com.dec.decisland
 
 import net.minecraft.core.registries.BuiltInRegistries
-import net.minecraft.resources.Identifier
+import net.minecraft.resources.ResourceLocation
 import net.neoforged.neoforge.common.ModConfigSpec
 
 object Config {
@@ -31,5 +31,5 @@ object Config {
     val SPEC: ModConfigSpec = builder.build()
 
     private fun validateItemName(obj: Any): Boolean =
-        obj is String && BuiltInRegistries.ITEM.containsKey(Identifier.parse(obj))
+        obj is String && BuiltInRegistries.ITEM.containsKey(ResourceLocation.parse(obj))
 }

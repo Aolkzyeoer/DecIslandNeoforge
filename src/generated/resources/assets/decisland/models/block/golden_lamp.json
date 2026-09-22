@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "bottom": "decisland:block/golden_lamp_bottom",
+    "side": "decisland:block/golden_lamp_side",
+    "top": "decisland:block/golden_lamp_top"
+  }
+}

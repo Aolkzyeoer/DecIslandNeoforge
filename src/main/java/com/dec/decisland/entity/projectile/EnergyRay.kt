@@ -2,7 +2,7 @@ package com.dec.decisland.entity.projectile
 
 import com.dec.decisland.DecIsland
 import com.dec.decisland.entity.ModEntities
-import net.minecraft.resources.Identifier
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.EntityType
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.item.ItemStack
@@ -19,5 +19,5 @@ class EnergyRay(entityType: EntityType<EnergyRay>, level: Level) : ParticleRayPr
     }
 
     override val baseDamage: Float = 7.0f
-    override val trailParticleId: Identifier = Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "energy_wake_particle")
+    override val trailParticleId: ResourceLocation = ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "energy_wake_particle")
 }

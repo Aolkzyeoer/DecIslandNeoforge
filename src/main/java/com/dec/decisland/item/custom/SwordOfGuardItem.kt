@@ -19,7 +19,7 @@ class SwordOfGuardItem(properties: Properties) : MagicWeapon(properties) {
     }
 
     override fun shoot(attackCounter: Int, serverLevel: ServerLevel, source: LivingEntity, stack: ItemStack) {
-        source.addEffect(MobEffectInstance(MobEffects.RESISTANCE, RESISTANCE_DURATION_TICKS, 0))
+        source.addEffect(MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, RESISTANCE_DURATION_TICKS, 0))
     }
 
     companion object {

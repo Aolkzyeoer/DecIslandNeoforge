@@ -1,14 +1,15 @@
 package com.dec.decisland.item.custom
 
 import com.dec.decisland.DecIsland
+import com.dec.decisland.item.compat.asEquipmentSlot
 import com.dec.decisland.mana.ManaManager
 import com.dec.decisland.network.Networking
-import net.minecraft.resources.Identifier
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.sounds.SoundEvents
 import net.minecraft.sounds.SoundSource
 import net.minecraft.world.InteractionHand
-import net.minecraft.world.InteractionResult
+import net.minecraft.world.InteractionResultHolder
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
@@ -24,13 +25,13 @@ abstract class ManaRestoreItem(properties: Properties) : Item(properties) {
 
     override fun isFoil(stack: ItemStack): Boolean = glint || super.isFoil(stack)
 
-    override fun use(level: Level, player: Player, hand: InteractionHand): InteractionResult {
+    override fun use(level: Level, player: Player, hand: InteractionHand): InteractionResultHolder<ItemStack> {
+        val stack = player.getItemInHand(hand)
         if (level.isClientSide) {
-            return InteractionResult.SUCCESS
+            return InteractionResultHolder.success(stack)
         }
 
-        val serverLevel = level as? ServerLevel ?: return InteractionResult.PASS
-        val stack = player.getItemInHand(hand)
+        val serverLevel = level as? ServerLevel ?: return InteractionResultHolder.pass(stack)
         val currentMana = ManaManager.getCurrentMana(player)
         var restored = false
 
@@ -69,14 +70,14 @@ abstract class ManaRestoreItem(properties: Properties) : Item(properties) {
 
         if (restored || damageOnEveryUse) {
             player.swing(hand, true)
-            return InteractionResult.SUCCESS_SERVER
+            return InteractionResultHolder.success(stack)
         }
 
-        return InteractionResult.FAIL
+        return InteractionResultHolder.fail(stack)
     }
 
     companion object {
-        private val WHITE_STAR_PARTICLE_ID: Identifier =
-            Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "white_star_particle")
+        private val WHITE_STAR_PARTICLE_ID: ResourceLocation =
+            ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "white_star_particle")
     }
 }

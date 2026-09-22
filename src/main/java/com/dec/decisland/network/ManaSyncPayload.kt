@@ -5,7 +5,7 @@ import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.network.codec.ByteBufCodecs
 import net.minecraft.network.codec.StreamCodec
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload
-import net.minecraft.resources.Identifier
+import net.minecraft.resources.ResourceLocation
 
 class ManaSyncPayload(
     val currentMana: Float,
@@ -15,7 +15,7 @@ class ManaSyncPayload(
 
     companion object {
         @JvmField
-        val ID: Identifier = Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "mana_sync_payload")
+        val ID: ResourceLocation = ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "mana_sync_payload")
 
         @JvmField
         val TYPE: CustomPacketPayload.Type<ManaSyncPayload> = CustomPacketPayload.Type(ID)

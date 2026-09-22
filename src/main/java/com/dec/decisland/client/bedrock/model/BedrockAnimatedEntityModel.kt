@@ -1,5 +1,7 @@
 package com.dec.decisland.client.bedrock.model
 
+import com.mojang.blaze3d.vertex.PoseStack
+import com.mojang.blaze3d.vertex.VertexConsumer
 import net.minecraft.client.model.EntityModel
 import net.minecraft.client.model.geom.ModelPart
 import net.minecraft.client.model.geom.PartPose
@@ -8,24 +10,45 @@ import net.minecraft.client.model.geom.builders.CubeListBuilder
 import net.minecraft.client.model.geom.builders.LayerDefinition
 import net.minecraft.client.model.geom.builders.MeshDefinition
 import net.minecraft.client.model.geom.builders.PartDefinition
-import net.minecraft.client.renderer.entity.state.EntityRenderState
+import net.minecraft.world.entity.Entity
 import kotlin.math.PI
 
 class BedrockAnimatedEntityModel private constructor(
     private val bakedModel: BakedBedrockModel,
     private val animation: BedrockAnimationClip,
-) : EntityModel<BedrockAnimatedEntityModel.State>(bakedModel.root) {
+) : EntityModel<Entity>() {
     constructor(geometry: BedrockGeometry, animation: BedrockAnimationClip) : this(
         bakeModel(geometry),
         animation,
     )
 
-    override fun setupAnim(state: State) {
+    override fun setupAnim(
+        entity: Entity,
+        limbSwing: Float,
+        limbSwingAmount: Float,
+        ageInTicks: Float,
+        netHeadYaw: Float,
+        headPitch: Float,
+    ) {
+        applyAnimation(ageInTicks / 20.0f)
+    }
+
+    override fun renderToBuffer(
+        poseStack: PoseStack,
+        buffer: VertexConsumer,
+        packedLight: Int,
+        packedOverlay: Int,
+        color: Int,
+    ) {
+        bakedModel.root.render(poseStack, buffer, packedLight, packedOverlay, color)
+    }
+
+    fun applyAnimation(timeSeconds: Float) {
         bakedModel.resetPoses()
 
         bakedModel.animatedBones.forEach { (boneName, part) ->
-            val sampledRotation = animation.sampleRotation(boneName, state.animationTimeSeconds)
-            val sampledScale = animation.sampleScale(boneName, state.animationTimeSeconds)
+            val sampledRotation = animation.sampleRotation(boneName, timeSeconds)
+            val sampledScale = animation.sampleScale(boneName, timeSeconds)
             part.xRot += sampledRotation.x.toModelRadX()
             part.yRot += sampledRotation.y.toModelRadY()
             part.zRot += sampledRotation.z.toModelRadZ()
@@ -33,10 +56,6 @@ class BedrockAnimatedEntityModel private constructor(
             part.yScale *= sampledScale.y
             part.zScale *= sampledScale.z
         }
-    }
-
-    class State : EntityRenderState() {
-        var animationTimeSeconds: Float = 0.0f
     }
 
     private data class PartPoseSnapshot(

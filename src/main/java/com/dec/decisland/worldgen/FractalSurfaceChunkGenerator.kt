@@ -5,7 +5,7 @@ import com.mojang.serialization.MapCodec
 import com.mojang.serialization.codecs.RecordCodecBuilder
 import net.minecraft.core.BlockPos
 import net.minecraft.core.QuartPos
-import net.minecraft.resources.Identifier
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.WorldGenRegion
 import net.minecraft.util.Mth
 import net.minecraft.world.level.LevelHeightAccessor
@@ -17,6 +17,7 @@ import net.minecraft.world.level.block.Blocks
 import net.minecraft.world.level.block.state.BlockState
 import net.minecraft.world.level.chunk.ChunkAccess
 import net.minecraft.world.level.chunk.ChunkGenerator
+import net.minecraft.world.level.levelgen.GenerationStep
 import net.minecraft.world.level.levelgen.Heightmap
 import net.minecraft.world.level.levelgen.RandomState
 import net.minecraft.world.level.levelgen.blending.Blender
@@ -62,9 +63,9 @@ class FractalSurfaceChunkGenerator(
 
         val biomeParamsByIndex = IntArray(size * size)
         val slopeParamPalette = ArrayList<SlopeParams>()
-        val slopeParamIndexById = HashMap<Identifier, Int>()
+        val slopeParamIndexById = HashMap<ResourceLocation, Int>()
 
-        fun slopeIndexFor(biomeId: Identifier): Int {
+        fun slopeIndexFor(biomeId: ResourceLocation): Int {
             val existing = slopeParamIndexById[biomeId]
             if (existing != null) return existing
             val params = settings.biomeSlopeParams[biomeId]
@@ -159,7 +160,7 @@ class FractalSurfaceChunkGenerator(
                 val biome = biomeSource.getNoiseBiome(qx, 0, qz, sampler)
                 val biomeId = biome.unwrapKey()
                     .orElseThrow { IllegalStateException("Biome holder has no key") }
-                    .identifier()
+                    .location()
                 biomeParamsByIndex[heightIndex(lx, lz)] = slopeIndexFor(biomeId)
             }
         }
@@ -263,7 +264,7 @@ class FractalSurfaceChunkGenerator(
 
     private fun ensureNoise(randomState: RandomState) {
         if (noiseA != null && noiseB != null && selectorNoise != null && macroNoise != null && caveNoise != null) return
-        val factory = randomState.getOrCreateRandomFactory(Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "fractal_surface"))
+        val factory = randomState.getOrCreateRandomFactory(ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "fractal_surface"))
         noiseA = FractalPerlin2D(factory.at(0, 0, 0).nextLong())
         noiseB = FractalPerlin2D(factory.at(1, 0, 0).nextLong())
         selectorNoise = FractalPerlin2D(factory.at(2, 0, 0).nextLong())
@@ -283,7 +284,8 @@ class FractalSurfaceChunkGenerator(
         randomState: RandomState,
         biomeManager: BiomeManager,
         structureManager: StructureManager,
-        chunk: ChunkAccess
+        chunk: ChunkAccess,
+        step: GenerationStep.Carving
     ) {
         // No caves/carvers for now (surface-first iteration).
     }
@@ -334,9 +336,9 @@ class FractalSurfaceChunkGenerator(
 
         val biomeParamsByIndex = IntArray(size * size)
         val slopeParamPalette = ArrayList<SlopeParams>()
-        val slopeParamIndexById = HashMap<Identifier, Int>()
+        val slopeParamIndexById = HashMap<ResourceLocation, Int>()
 
-        fun slopeIndexFor(biomeId: Identifier): Int {
+        fun slopeIndexFor(biomeId: ResourceLocation): Int {
             val existing = slopeParamIndexById[biomeId]
             if (existing != null) return existing
             val params = settings.biomeSlopeParams[biomeId]
@@ -359,7 +361,7 @@ class FractalSurfaceChunkGenerator(
                 val biome = biomeSource.getNoiseBiome(qx, 0, qz, sampler)
                 val biomeId = biome.unwrapKey()
                     .orElseThrow { IllegalStateException("Biome holder has no key") }
-                    .identifier()
+                    .location()
                 biomeParamsByIndex[heightIndex(lx, lz)] = slopeIndexFor(biomeId)
             }
         }
@@ -558,17 +560,17 @@ class FractalSurfaceChunkGenerator(
                 val worldZ = chunkPos.minBlockZ + z
                 val biome = biomeSource.getNoiseBiome(QuartPos.fromBlock(worldX), 0, QuartPos.fromBlock(worldZ), sampler)
 
-                val biomeId = biome.unwrapKey().orElseThrow().identifier()
-                val isPlains = biomeId == Biomes.PLAINS.identifier()
+                val biomeId = biome.unwrapKey().orElseThrow().location()
+                val isPlains = biomeId == Biomes.PLAINS.location()
                 val shouldSnowCover = !isPlains
                 val topIsSnow = shouldSnowCover && h >= settings.snowLine
                 val isGlacier = glacierMask[idx] > 0.65 && h >= settings.snowLine - 10
                 val isRiver = riverMask[idx] > 0.55
                 val isIceRiver = iceRiverMask[idx] > settings.macro.iceRiverThreshold && !isPlains
-                val isForestLike = biomeId == Biomes.FOREST.identifier() || biomeId == Biomes.BIRCH_FOREST.identifier() || biomeId == Biomes.SNOWY_TAIGA.identifier() || biomeId == Biomes.GROVE.identifier()
-                val isIceSpikesBiome = biomeId == Biomes.ICE_SPIKES.identifier()
+                val isForestLike = biomeId == Biomes.FOREST.location() || biomeId == Biomes.BIRCH_FOREST.location() || biomeId == Biomes.SNOWY_TAIGA.location() || biomeId == Biomes.GROVE.location()
+                val isIceSpikesBiome = biomeId == Biomes.ICE_SPIKES.location()
 
-                val topIsGrass = isPlains || biomeId == Biomes.MEADOW.identifier() || biomeId == Biomes.FOREST.identifier() || biomeId == Biomes.BIRCH_FOREST.identifier() || biomeId == Biomes.SNOWY_TAIGA.identifier() || biomeId == Biomes.GROVE.identifier()
+                val topIsGrass = isPlains || biomeId == Biomes.MEADOW.location() || biomeId == Biomes.FOREST.location() || biomeId == Biomes.BIRCH_FOREST.location() || biomeId == Biomes.SNOWY_TAIGA.location() || biomeId == Biomes.GROVE.location()
                 val topStateDefault = if (topIsGrass) grass else snowBlock
 
                 // Solid terrain.
@@ -585,7 +587,7 @@ class FractalSurfaceChunkGenerator(
                         ) > settings.underground.threshold
 
                     if (carve) {
-                        chunk.setBlockState(BlockPos(worldX, y, worldZ), Blocks.AIR.defaultBlockState(), 2)
+                        chunk.setBlockState(BlockPos(worldX, y, worldZ), Blocks.AIR.defaultBlockState(), false)
                         continue
                     }
 
@@ -599,7 +601,7 @@ class FractalSurfaceChunkGenerator(
                         y >= h - 3 -> dirt
                         else -> stone
                     }
-                    chunk.setBlockState(BlockPos(worldX, y, worldZ), state, 2)
+                    chunk.setBlockState(BlockPos(worldX, y, worldZ), state, false)
                 }
 
                 // Water fill (optional lowlands).
@@ -608,25 +610,25 @@ class FractalSurfaceChunkGenerator(
                     val fill = if (isIceRiver) ice else water
                     for (y in (h + 1)..riverFillTop) {
                         if (y < maxY) {
-                            chunk.setBlockState(BlockPos(worldX, y, worldZ), fill, 2)
+                            chunk.setBlockState(BlockPos(worldX, y, worldZ), fill, false)
                         }
                     }
                     if (!isIceRiver && shouldSnowCover && riverFillTop + 1 < maxY) {
                         // Light snow cover around cold rivers.
-                        chunk.setBlockState(BlockPos(worldX, riverFillTop + 1, worldZ), snowLayer, 2)
+                        chunk.setBlockState(BlockPos(worldX, riverFillTop + 1, worldZ), snowLayer, false)
                     }
                 } else if (h < settings.seaLevel) {
                     val fill = if (isIceRiver) ice else water
                     for (y in (h + 1)..settings.seaLevel) {
                         if (y < maxY) {
-                            chunk.setBlockState(BlockPos(worldX, y, worldZ), fill, 2)
+                            chunk.setBlockState(BlockPos(worldX, y, worldZ), fill, false)
                         }
                     }
                 } else if (shouldSnowCover && !topIsSnow) {
                     val y = h + 1
                     if (y in minY until maxY) {
                         if (!isGlacier && !isIceRiver) {
-                            chunk.setBlockState(BlockPos(worldX, y, worldZ), snowLayer, 2)
+                            chunk.setBlockState(BlockPos(worldX, y, worldZ), snowLayer, false)
                         }
                     }
                 }
@@ -639,7 +641,7 @@ class FractalSurfaceChunkGenerator(
                         val height = (12 + ((spikeNoise - 0.62) / 0.38 * 80.0)).toInt()
                         val topY = min(maxY - 1, h + height)
                         for (yy in (h + 1)..topY) {
-                            chunk.setBlockState(BlockPos(worldX, yy, worldZ), base, 2)
+                            chunk.setBlockState(BlockPos(worldX, yy, worldZ), base, false)
                         }
                     }
                 }

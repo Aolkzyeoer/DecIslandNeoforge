@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "A": {
+      "item": "minecraft:diamond_sword"
+    },
+    "B": {
+      "item": "decisland:everlasting_winter_stick"
+    },
+    "X": {
+      "item": "decisland:everlasting_winter_ingot"
+    }
+  },
+  "pattern": [
+    " X ",
+    "XAX",
+    " B "
+  ],
+  "result": {
+    "count": 1,
+    "id": "decisland:everlasting_winter_sword"
+  }
+}

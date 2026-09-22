@@ -10,6 +10,7 @@ import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.server.level.ServerLevel
 import com.dec.decisland.tag.ModItemTags
 import net.minecraft.world.InteractionHand
+import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.item.ItemCooldowns
 import net.minecraft.world.item.ItemStack
@@ -17,7 +18,7 @@ import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.fml.common.EventBusSubscriber
 import net.neoforged.neoforge.event.tick.PlayerTickEvent
 import java.lang.reflect.Constructor
-import java.lang.reflect.Method
+import java.lang.reflect.Field
 import java.util.EnumMap
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
@@ -44,10 +45,10 @@ object AccessoryCombatEffects {
     private val accessoryProcCooldowns: MutableMap<AccessoryProcCooldownKey, Long> = ConcurrentHashMap()
 
     private val cooldownInstanceClass: Class<*> = Class.forName("net.minecraft.world.item.ItemCooldowns\$CooldownInstance")
-    private val cooldownStartTimeMethod: Method =
-        cooldownInstanceClass.getDeclaredMethod("startTime").apply { isAccessible = true }
-    private val cooldownEndTimeMethod: Method =
-        cooldownInstanceClass.getDeclaredMethod("endTime").apply { isAccessible = true }
+    private val cooldownStartTimeField: Field =
+        cooldownInstanceClass.getDeclaredField("startTime").apply { isAccessible = true }
+    private val cooldownEndTimeField: Field =
+        cooldownInstanceClass.getDeclaredField("endTime").apply { isAccessible = true }
     private val cooldownInstanceConstructor: Constructor<*> =
         cooldownInstanceClass.getDeclaredConstructor(Int::class.javaPrimitiveType, Int::class.javaPrimitiveType).apply { isAccessible = true }
 
@@ -92,7 +93,7 @@ object AccessoryCombatEffects {
 
         accessoryProcCooldowns[cooldownKey] = serverLevel.gameTime + procItem.accessoryProcCooldownTicks
         procItem.triggerAccessoryProc(serverLevel, player, weaponStack, accessory.stack)
-        accessory.stack.hurtAndBreak(1, player, accessory.hand.asEquipmentSlot())
+        accessory.stack.hurtAndBreak(1, player, LivingEntity.getSlotForHand(accessory.hand))
     }
 
     @JvmStatic
@@ -125,7 +126,7 @@ object AccessoryCombatEffects {
             seenCategories += category
 
             val accessory = getBestAccessory(player, category)
-            if (accessory == null || !player.cooldowns.isOnCooldown(stack)) {
+            if (accessory == null || !player.cooldowns.isOnCooldown(stack.item)) {
                 accumulators[category] = 0.0
                 continue
             }
@@ -141,10 +142,11 @@ object AccessoryCombatEffects {
     }
 
     private fun shortenCooldown(cooldowns: ItemCooldowns, stack: ItemStack, accumulator: Double): Double {
-        val cooldownGroup = cooldowns.getCooldownGroup(stack)
+        // In 1.21.1 the ItemCooldowns map is keyed directly by Item instead of a ResourceLocation cooldown group.
+        val cooldownItem = stack.item
         val accessor = cooldowns as ItemCooldownsAccessor
-        val cooldownMap = accessor.`decisland$getCooldowns`()
-        var instance = cooldownMap[cooldownGroup] ?: return 0.0
+        val cooldownMap = accessor.`decisland$getCooldowns`() as MutableMap<Any, Any>
+        var instance = cooldownMap[cooldownItem] ?: return 0.0
         val tickCount = accessor.`decisland$getTickCount`()
         var pending = accumulator
 
@@ -152,22 +154,22 @@ object AccessoryCombatEffects {
             val endTime = readCooldownEnd(instance)
             val remainingTicks = endTime - tickCount
             if (remainingTicks <= 1) {
-                cooldowns.removeCooldown(cooldownGroup)
+                cooldowns.removeCooldown(cooldownItem)
                 return 0.0
             }
 
             val startTime = readCooldownStart(instance)
             instance = cooldownInstanceConstructor.newInstance(startTime, endTime - 1)
-            cooldownMap[cooldownGroup] = instance
+            cooldownMap[cooldownItem] = instance
             pending -= 1.0
         }
 
         return pending
     }
 
-    private fun readCooldownStart(instance: Any): Int = cooldownStartTimeMethod.invoke(instance) as Int
+    private fun readCooldownStart(instance: Any): Int = cooldownStartTimeField.getInt(instance)
 
-    private fun readCooldownEnd(instance: Any): Int = cooldownEndTimeMethod.invoke(instance) as Int
+    private fun readCooldownEnd(instance: Any): Int = cooldownEndTimeField.getInt(instance)
 
     private fun getBestAccessory(player: Player, category: WeaponCooldownCategory): EquippedAccessory? =
         InteractionHand.entries

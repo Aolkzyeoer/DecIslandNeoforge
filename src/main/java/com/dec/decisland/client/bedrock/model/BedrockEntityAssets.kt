@@ -5,23 +5,23 @@ import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import net.minecraft.client.Minecraft
-import net.minecraft.resources.Identifier
+import net.minecraft.resources.ResourceLocation
 import java.io.InputStream
 import java.io.InputStreamReader
 import java.util.concurrent.ConcurrentHashMap
 
 object BedrockEntityAssets {
-    private val geometryCache = ConcurrentHashMap<Identifier, BedrockGeometry>()
-    private val animationCache = ConcurrentHashMap<Identifier, Map<String, BedrockAnimationClip>>()
+    private val geometryCache = ConcurrentHashMap<ResourceLocation, BedrockGeometry>()
+    private val animationCache = ConcurrentHashMap<ResourceLocation, Map<String, BedrockAnimationClip>>()
 
-    fun geometry(resourceId: Identifier): BedrockGeometry =
+    fun geometry(resourceId: ResourceLocation): BedrockGeometry =
         geometryCache.computeIfAbsent(resourceId) { loadGeometry(it) }
 
-    fun animation(resourceId: Identifier, animationName: String): BedrockAnimationClip =
+    fun animation(resourceId: ResourceLocation, animationName: String): BedrockAnimationClip =
         animationCache.computeIfAbsent(resourceId) { loadAnimations(it) }[animationName]
             ?: error("Missing Bedrock animation '$animationName' in $resourceId")
 
-    private fun loadGeometry(resourceId: Identifier): BedrockGeometry {
+    private fun loadGeometry(resourceId: ResourceLocation): BedrockGeometry {
         val root = parseJson(resourceId)
         val geometryObject = root.getAsJsonArrayOrNull("minecraft:geometry")
             ?.firstOrNull()
@@ -61,7 +61,7 @@ object BedrockEntityAssets {
         )
     }
 
-    private fun loadAnimations(resourceId: Identifier): Map<String, BedrockAnimationClip> {
+    private fun loadAnimations(resourceId: ResourceLocation): Map<String, BedrockAnimationClip> {
         val root = parseJson(resourceId)
         val animationsObject = root.getAsJsonObjectOrNull("animations")
             ?: error("Invalid Bedrock animation file: $resourceId")
@@ -201,7 +201,7 @@ object BedrockEntityAssets {
         )
     }
 
-    private fun parseJson(resourceId: Identifier): JsonObject {
+    private fun parseJson(resourceId: ResourceLocation): JsonObject {
         openResource(resourceId).use { stream ->
             if (stream == null) {
                 error("Missing Bedrock asset: $resourceId")
@@ -213,7 +213,7 @@ object BedrockEntityAssets {
         }
     }
 
-    private fun openResource(resourceId: Identifier): InputStream? {
+    private fun openResource(resourceId: ResourceLocation): InputStream? {
         val resourceManager = runCatching { Minecraft.getInstance().resourceManager }.getOrNull()
         val resource = resourceManager?.getResource(resourceId)?.orElse(null)
         if (resource != null) {

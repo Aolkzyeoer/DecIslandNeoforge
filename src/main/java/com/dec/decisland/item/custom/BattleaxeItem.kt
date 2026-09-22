@@ -4,11 +4,11 @@ import com.dec.decisland.network.Networking
 import net.minecraft.core.BlockPos
 import net.minecraft.core.component.DataComponents
 import net.minecraft.nbt.CompoundTag
-import net.minecraft.resources.Identifier
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.stats.Stats
 import net.minecraft.world.InteractionHand
-import net.minecraft.world.InteractionResult
+import net.minecraft.world.InteractionResultHolder
 import net.minecraft.world.entity.EquipmentSlot
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.decoration.ArmorStand
@@ -27,10 +27,10 @@ class BattleaxeItem(
     properties: Properties,
     private val config: BattleaxeConfig,
 ) : Item(properties) {
-    override fun use(level: Level, player: Player, hand: InteractionHand): InteractionResult {
+    override fun use(level: Level, player: Player, hand: InteractionHand): InteractionResultHolder<ItemStack> {
         val stack = player.getItemInHand(hand)
-        if (player.cooldowns.isOnCooldown(stack)) {
-            return InteractionResult.FAIL
+        if (player.cooldowns.isOnCooldown(stack.item)) {
+            return InteractionResultHolder.fail(stack)
         }
 
         if (!level.isClientSide) {
@@ -39,14 +39,14 @@ class BattleaxeItem(
         }
 
         player.swing(hand, true)
-        return InteractionResult.SUCCESS_SERVER
+        return InteractionResultHolder.sidedSuccess(stack, level.isClientSide)
     }
 
-    override fun hurtEnemy(stack: ItemStack, target: LivingEntity, attacker: LivingEntity) {
+    override fun hurtEnemy(stack: ItemStack, target: LivingEntity, attacker: LivingEntity): Boolean {
         val player = attacker as? Player
         if (player != null && player.level() is ServerLevel) {
             val tag = readTag(stack)
-            val count = tag.getIntOr(TAG_SKILL_COUNT, 0)
+            val count = tag.getInt(TAG_SKILL_COUNT)
             if (count > config.comboThreshold) {
                 performSkill(player.level() as ServerLevel, player, stack, combo = true)
             } else {
@@ -54,7 +54,7 @@ class BattleaxeItem(
                 writeTag(stack, tag)
             }
         }
-        super.hurtEnemy(stack, target, attacker)
+        return super.hurtEnemy(stack, target, attacker)
     }
 
     // Bedrock's attack_more event: mining with a battleaxe costs 2 extra durability
@@ -102,7 +102,7 @@ class BattleaxeItem(
 
         val originalInvulnerableTime = target.invulnerableTime
         target.invulnerableTime = 0
-        val hurt = target.hurtServer(serverLevel, serverLevel.damageSources().playerAttack(attacker), damage)
+        val hurt = target.hurt(serverLevel.damageSources().playerAttack(attacker), damage)
         if (!hurt) {
             target.invulnerableTime = originalInvulnerableTime
         }
@@ -129,7 +129,7 @@ class BattleaxeItem(
         val aoeOffsets: List<Vec3> = builder.aoeOffsets.toList()
 
         @JvmField
-        val ringParticleId: Identifier = builder.ringParticleId
+        val ringParticleId: ResourceLocation = builder.ringParticleId
 
         @JvmField
         val skillParticleBursts: Int = builder.skillParticleBursts
@@ -143,7 +143,7 @@ class BattleaxeItem(
         class Builder(
             @JvmField val skillDamage: Float,
             @JvmField val comboSkillDamage: Float,
-            @JvmField val ringParticleId: Identifier,
+            @JvmField val ringParticleId: ResourceLocation,
         ) {
             internal var aoeRadius: Double = 1.3
             internal var aoeOffsets: List<Vec3> = CROSS_OFFSETS

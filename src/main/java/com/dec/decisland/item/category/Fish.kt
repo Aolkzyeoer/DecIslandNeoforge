@@ -1,23 +1,23 @@
-﻿package com.dec.decisland.item.category
+package com.dec.decisland.item.category
 
 import com.dec.decisland.item.CustomItemProperties
 import com.dec.decisland.item.ItemConfig
 import com.dec.decisland.item.ModCreativeModeTabs
 import com.dec.decisland.item.ModItems
+import com.dec.decisland.item.ToolMaterial
+import com.dec.decisland.item.compat.sword
+import com.dec.decisland.item.compat.useCooldown
 import com.dec.decisland.item.custom.AshPufferfish
 import com.dec.decisland.item.custom.EnderFish
 import com.dec.decisland.item.custom.SwordFish
 import com.dec.decisland.tag.ModItemTags
-import net.minecraft.client.data.models.model.ModelTemplates
+import net.minecraft.data.models.model.ModelTemplates
 import net.minecraft.tags.TagKey
 import net.minecraft.world.effect.MobEffectInstance
 import net.minecraft.world.effect.MobEffects
 import net.minecraft.world.food.FoodProperties
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.Items
-import net.minecraft.world.item.ToolMaterial
-import net.minecraft.world.item.component.Consumables
-import net.minecraft.world.item.consume_effects.ApplyStatusEffectsConsumeEffect
 import net.neoforged.neoforge.registries.DeferredItem
 import java.util.function.Supplier
 
@@ -28,7 +28,7 @@ object Fish {
         zhCn: String,
         props: Supplier<Item.Properties>,
         tab: Supplier<net.minecraft.world.item.CreativeModeTab> = ModCreativeModeTabs.DECISLAND_FOODS_TAB,
-        modelTemplate: net.minecraft.client.data.models.model.ModelTemplate = ModelTemplates.FLAT_ITEM,
+        modelTemplate: net.minecraft.data.models.model.ModelTemplate = ModelTemplates.FLAT_ITEM,
         customProp: CustomItemProperties = CustomItemProperties.Builder().build(),
         func: java.util.function.Function<Item.Properties, out Item> = java.util.function.Function(::Item),
         tags: List<TagKey<Item>> = emptyList(),
@@ -44,28 +44,32 @@ object Fish {
                 .build(),
         )
 
+    /** 1.21.1 兼容层：替代 1.21.2+ 的 ApplyStatusEffectsConsumeEffect（食用时以概率施加效果）。 */
+    private data class FishEffect(val effect: MobEffectInstance, val probability: Float = 1.0f)
+
     private fun foodProps(
         nutrition: Int,
         saturation: Float,
         alwaysEat: Boolean = false,
         useDurationSeconds: Float = 1.6f,
         convertTo: Item? = null,
-        consumeEffects: List<ApplyStatusEffectsConsumeEffect> = emptyList(),
+        consumeEffects: List<FishEffect> = emptyList(),
         configureProps: (Item.Properties.() -> Item.Properties)? = null,
     ): Supplier<Item.Properties> = Supplier {
-        val consumable = Consumables.defaultFood()
-        if (useDurationSeconds != 1.6f) {
-            consumable.consumeSeconds(useDurationSeconds)
+        val foodBuilder = FoodProperties.Builder().nutrition(nutrition).saturationModifier(saturation)
+        if (alwaysEat) {
+            foodBuilder.alwaysEdible()
         }
-        consumeEffects.forEach(consumable::onConsume)
+        if (convertTo != null) {
+            foodBuilder.usingConvertsTo(convertTo)
+        }
+        consumeEffects.forEach { foodBuilder.effect(it.effect, it.probability) }
+        val food = foodBuilder.build()
 
         var props = Item.Properties().food(
-            FoodProperties(nutrition, saturation, alwaysEat),
-            consumable.build(),
+            if (useDurationSeconds == 1.6f) food
+            else FoodProperties(food.nutrition, food.saturation, food.canAlwaysEat, useDurationSeconds, food.usingConvertsTo, food.effects),
         )
-        if (convertTo != null) {
-            props = props.usingConvertsTo(convertTo)
-        }
         if (configureProps != null) {
             props = configureProps.invoke(props)
         }
@@ -93,8 +97,8 @@ object Fish {
             0.2f,
             alwaysEat = true,
             consumeEffects = listOf(
-                ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.POISON, 5 * 20, 2), 0.7f),
-                ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.INSTANT_DAMAGE, 1, 0), 0.5f),
+                FishEffect(MobEffectInstance(MobEffects.POISON, 5 * 20, 2), 0.7f),
+                FishEffect(MobEffectInstance(MobEffects.HARM, 1, 0), 0.5f),
             ),
         ),
     )
@@ -109,8 +113,8 @@ object Fish {
             0.2f,
             alwaysEat = true,
             consumeEffects = listOf(
-                ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.POISON, 5 * 20, 2), 0.7f),
-                ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.INSTANT_DAMAGE, 1, 0), 0.75f),
+                FishEffect(MobEffectInstance(MobEffects.POISON, 5 * 20, 2), 0.7f),
+                FishEffect(MobEffectInstance(MobEffects.HARM, 1, 0), 0.75f),
             ),
         ),
     )
@@ -125,7 +129,7 @@ object Fish {
             0.2f,
             alwaysEat = true,
             consumeEffects = listOf(
-                ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.POISON, 5 * 20, 3), 0.7f),
+                FishEffect(MobEffectInstance(MobEffects.POISON, 5 * 20, 3), 0.7f),
             ),
         ),
     )
@@ -140,7 +144,7 @@ object Fish {
             0.2f,
             alwaysEat = true,
             consumeEffects = listOf(
-                ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.POISON, 5 * 20, 2), 0.7f),
+                FishEffect(MobEffectInstance(MobEffects.POISON, 5 * 20, 2), 0.7f),
             ),
         ),
     )
@@ -203,7 +207,7 @@ object Fish {
             3,
             0.6f,
             consumeEffects = listOf(
-                ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.POISON, 20 * 20, 1), 0.8f),
+                FishEffect(MobEffectInstance(MobEffects.POISON, 20 * 20, 1), 0.8f),
             ),
         ),
     )
@@ -217,7 +221,7 @@ object Fish {
             3,
             0.6f,
             consumeEffects = listOf(
-                ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.INSTANT_DAMAGE, 1, 1), 0.7f),
+                FishEffect(MobEffectInstance(MobEffects.HARM, 1, 1), 0.7f),
             ),
         ),
     )
@@ -231,7 +235,7 @@ object Fish {
             4,
             0.6f,
             consumeEffects = listOf(
-                ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.SLOWNESS, 10 * 20, 0), 0.5f),
+                FishEffect(MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 10 * 20, 0), 0.5f),
             ),
         ),
     )
@@ -270,7 +274,7 @@ object Fish {
             4,
             0.5f,
             consumeEffects = listOf(
-                ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.SLOWNESS, 30 * 20, 1)),
+                FishEffect(MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 30 * 20, 1)),
             ),
         ),
     )
@@ -300,7 +304,7 @@ object Fish {
             3,
             0.6f,
             consumeEffects = listOf(
-                ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.POISON, 5 * 20, 3), 0.9f),
+                FishEffect(MobEffectInstance(MobEffects.POISON, 5 * 20, 3), 0.9f),
             ),
         ),
     )
@@ -322,8 +326,8 @@ object Fish {
             2,
             0.6f,
             consumeEffects = listOf(
-                ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.POISON, 10 * 20, 0), 0.3f),
-                ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.HUNGER, 30 * 20, 0), 0.25f),
+                FishEffect(MobEffectInstance(MobEffects.POISON, 10 * 20, 0), 0.3f),
+                FishEffect(MobEffectInstance(MobEffects.HUNGER, 30 * 20, 0), 0.25f),
             ),
         ),
     )
@@ -353,7 +357,7 @@ object Fish {
             3,
             0.5f,
             consumeEffects = listOf(
-                ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.POISON, 5 * 20, 1)),
+                FishEffect(MobEffectInstance(MobEffects.POISON, 5 * 20, 1)),
             ),
         ),
     )
@@ -377,7 +381,7 @@ object Fish {
             alwaysEat = true,
             useDurationSeconds = 3.2f,
             consumeEffects = listOf(
-                ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.STRENGTH, 150 * 20, 1)),
+                FishEffect(MobEffectInstance(MobEffects.DAMAGE_BOOST, 150 * 20, 1)),
             ),
         ).let { supplier ->
             Supplier {

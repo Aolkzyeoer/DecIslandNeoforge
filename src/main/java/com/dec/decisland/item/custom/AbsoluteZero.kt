@@ -2,14 +2,15 @@ package com.dec.decisland.item.custom
 
 import com.dec.decisland.DecIsland
 import com.dec.decisland.entity.projectile.BlizzardEnergy
+import com.dec.decisland.item.compat.ItemCompat
+import com.dec.decisland.item.compat.ModProjectileUtil
 import com.dec.decisland.particles.ModParticles
-import net.minecraft.resources.Identifier
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.entity.Entity
-import net.minecraft.world.entity.EquipmentSlot
 import net.minecraft.world.entity.LivingEntity
-import net.minecraft.world.entity.projectile.Projectile
 import net.minecraft.world.item.ItemStack
+import net.minecraft.world.level.Level
 import java.util.Random
 
 class AbsoluteZero(properties: Properties) : Katana(properties) {
@@ -26,7 +27,7 @@ class AbsoluteZero(properties: Properties) : Katana(properties) {
 
     override fun useServer(serverLevel: ServerLevel, source: LivingEntity) {
         repeat(5) {
-            Projectile.spawnProjectileUsingShoot(
+            ModProjectileUtil.spawnUsingShoot(
                 ::BlizzardEnergy,
                 serverLevel,
                 source.useItem,
@@ -57,7 +58,7 @@ class AbsoluteZero(properties: Properties) : Katana(properties) {
 
     override fun attackServer(serverLevel: ServerLevel, source: LivingEntity) {
         repeat(3) {
-            Projectile.spawnProjectileUsingShoot(
+            ModProjectileUtil.spawnUsingShoot(
                 ::BlizzardEnergy,
                 serverLevel,
                 source.useItem,
@@ -73,16 +74,21 @@ class AbsoluteZero(properties: Properties) : Katana(properties) {
 
     override fun onAttackTriggerSweep(stack: ItemStack): Boolean = Random().nextInt(3) == 0
 
-    override fun inventoryTick(stack: ItemStack, level: ServerLevel, entity: Entity, slot: EquipmentSlot?) {
-        super.inventoryTick(stack, level, entity, slot)
-        updateMovementSpeedModifier(entity, slot, MOVEMENT_SPEED_ADDITION, MOVEMENT_SPEED_MODIFIER_ID)
+    override fun inventoryTick(stack: ItemStack, level: Level, entity: Entity, slotId: Int, isSelected: Boolean) {
+        super.inventoryTick(stack, level, entity, slotId, isSelected)
+        updateMovementSpeedModifier(
+            entity,
+            ItemCompat.slotFromIndex(slotId),
+            MOVEMENT_SPEED_ADDITION,
+            MOVEMENT_SPEED_MODIFIER_ID,
+        )
     }
 
     companion object {
-        private val ABSOLUTE_ZERO_PARTICLE_ID: Identifier =
-            Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "absolute_zero_particle")
-        private val MOVEMENT_SPEED_MODIFIER_ID: Identifier =
-            Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "movement_speed/absolute_zero")
+        private val ABSOLUTE_ZERO_PARTICLE_ID: ResourceLocation =
+            ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "absolute_zero_particle")
+        private val MOVEMENT_SPEED_MODIFIER_ID: ResourceLocation =
+            ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "movement_speed/absolute_zero")
         private const val MOVEMENT_SPEED_ADDITION: Double = 0.03
     }
 }

@@ -1,21 +1,22 @@
-﻿package com.dec.decisland.item
+package com.dec.decisland.item
 
 import com.dec.decisland.DecIsland
+import com.dec.decisland.item.compat.repairable
+import com.dec.decisland.item.compat.useCooldown
 import com.dec.decisland.item.custom.*
 import com.dec.decisland.tag.ModItemTags
-import net.minecraft.client.data.models.model.ModelTemplates
+import net.minecraft.data.models.model.ModelTemplates
 import net.minecraft.core.Holder
 import net.minecraft.world.effect.MobEffectInstance
 import net.minecraft.world.effect.MobEffects
 import net.minecraft.world.food.FoodProperties
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.Items.*
-import net.minecraft.world.item.ToolMaterial
-import net.minecraft.world.item.component.Consumables
-import net.minecraft.world.item.consume_effects.ApplyStatusEffectsConsumeEffect
+import net.minecraft.world.level.ItemLike
 import net.neoforged.bus.api.IEventBus
 import net.neoforged.neoforge.registries.DeferredItem
 import net.neoforged.neoforge.registries.DeferredRegister
+import java.util.function.Supplier
 
 object ModItems {
     @JvmField
@@ -31,40 +32,35 @@ object ModItems {
     @JvmField
     val A_BOWL_OF_RICE: DeferredItem<Item> = registerItem(
             ItemConfig.Builder("a_bowl_of_rice", mapOf("en_us" to "A Bowl of Rice", "zh_cn" to "米饭")).props { (Item.Properties()).food(
-                    FoodProperties(10, 0.6F, false),
-                    Consumables.defaultFood().build()
-            ).usingConvertsTo(BOWL)}.creativeTab(ModCreativeModeTabs.DECISLAND_FOODS_TAB).build()
+                    food(10, 0.6F, convertTo = BOWL)
+            )}.creativeTab(ModCreativeModeTabs.DECISLAND_FOODS_TAB).build()
     )
 
     @JvmField
     val RICE: DeferredItem<Item> = registerItem(
             ItemConfig.Builder("rice", mapOf("en_us" to "Rice", "zh_cn" to "米")).props { (Item.Properties()).food(
-                    FoodProperties(1, 0.6F, false),
-                    Consumables.defaultFood().consumeSeconds(1.0F).build()
+                    food(1, 0.6F, eatSeconds = 1.0F)
             )}.creativeTab(ModCreativeModeTabs.DECISLAND_FOODS_TAB).build()
     )
 
     @JvmField
     val A_PIECE_OF_SALMON: DeferredItem<Item> = registerItem(
             ItemConfig.Builder("a_piece_of_salmon", mapOf("en_us" to "a Piece of Salmon", "zh_cn" to "生鱼片")).props { (Item.Properties()).food(
-                    FoodProperties(1, 0.4F, false),
-                    Consumables.defaultFood().build()
+                    food(1, 0.4F)
             )}.creativeTab(ModCreativeModeTabs.DECISLAND_FOODS_TAB).build()
     )
 
     @JvmField
     val APPLE_PIE: DeferredItem<Item> = registerItem(
             ItemConfig.Builder("apple_pie", mapOf("en_us" to "Apple Pie", "zh_cn" to "苹果派")).props { (Item.Properties()).food(
-                    FoodProperties(12, 0.6F, false),
-                    Consumables.defaultFood().onConsume(ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.REGENERATION, 20 * 20, 2))).build()
+                    food(12, 0.6F, effects = listOf(MobEffectInstance(MobEffects.REGENERATION, 20 * 20, 2) to 1.0f))
             )}.creativeTab(ModCreativeModeTabs.DECISLAND_FOODS_TAB).build()
     )
 
     @JvmField
     val APPLE_JUICE: DeferredItem<Item> = registerItem(
             ItemConfig.Builder("apple_juice", mapOf("en_us" to "Apple Juice", "zh_cn" to "苹果汁")).props { (Item.Properties()).food(
-                    FoodProperties(2, 0.0f, false),
-                    Consumables.defaultDrink().onConsume(ApplyStatusEffectsConsumeEffect(MobEffectInstance(MobEffects.REGENERATION, 20 * 20, 1))).build()
+                    food(2, 0.0f, effects = listOf(MobEffectInstance(MobEffects.REGENERATION, 20 * 20, 1) to 1.0f))
             )}.creativeTab(ModCreativeModeTabs.DECISLAND_FOODS_TAB).build()
     )
 
@@ -87,8 +83,7 @@ object ModItems {
     @JvmField
     val BRACKEN: DeferredItem<Item> = registerItem(
             ItemConfig.Builder("bracken", mapOf("en_us" to "Bracken", "zh_cn" to "蕨菜")).props { (Item.Properties()).food(
-                            FoodProperties(1, 0.1F, false),
-                            Consumables.defaultFood().build()
+                            food(1, 0.1F)
                     )}.customProp(CustomItemProperties.Builder().compostableChance(0.3f).build())
                     .creativeTab(ModCreativeModeTabs.DECISLAND_FOODS_TAB).build()
     )
@@ -96,26 +91,22 @@ object ModItems {
     @JvmField
     val CANDY: DeferredItem<Item> = registerItem(
             ItemConfig.Builder("candy", mapOf("en_us" to "Candy", "zh_cn" to "糖果")).props { (Item.Properties()).food(
-                    FoodProperties(1, 0.4f, true),
-                    Consumables.defaultFood().build()
+                    food(1, 0.4f, canAlwaysEat = true)
             )}.creativeTab(ModCreativeModeTabs.DECISLAND_FOODS_TAB).build()
     )
 
     @JvmField
     val CHOCOLATE_COOKIE: DeferredItem<Item> = registerItem(
             ItemConfig.Builder("chocolate_cookie", mapOf("en_us" to "Chocolate Cookie", "zh_cn" to "巧克力曲奇")).props { (Item.Properties()).food(
-                    FoodProperties(3, 0.6f, false),
-                    Consumables.defaultFood().build()
+                    food(3, 0.6f)
             )}.creativeTab(ModCreativeModeTabs.DECISLAND_FOODS_TAB).build()
     )
 
     @JvmField
     val CHOCOLATES: DeferredItem<Item> = registerItem(
             ItemConfig.Builder("chocolates", mapOf("en_us" to "Chocolates", "zh_cn" to "巧克力")).props { (Item.Properties()).food(
-                    FoodProperties(7, 0.6f, false),
-                    Consumables.defaultFood().onConsume(ApplyStatusEffectsConsumeEffect(
-                            MobEffectInstance(MobEffects.SPEED, 20 * 20, 0), 0.73f)).build()
-            ).usingConvertsTo(PAPER)}.creativeTab(ModCreativeModeTabs.DECISLAND_FOODS_TAB).build()
+                    food(7, 0.6f, convertTo = PAPER, effects = listOf(MobEffectInstance(MobEffects.MOVEMENT_SPEED, 20 * 20, 0) to 0.73f))
+            )}.creativeTab(ModCreativeModeTabs.DECISLAND_FOODS_TAB).build()
     )
 
     @JvmField
@@ -126,8 +117,7 @@ object ModItems {
     @JvmField
     val FRIED_EGG: DeferredItem<Item> = registerItem(
             ItemConfig.Builder("fried_egg", mapOf("en_us" to "Fried Egg", "zh_cn" to "煎蛋")).props { (Item.Properties()).food(
-                    FoodProperties(5, 0.4f, false),
-                    Consumables.defaultFood().build()
+                    food(5, 0.4f)
             )}.creativeTab(ModCreativeModeTabs.DECISLAND_FOODS_TAB).build()
     )
 
@@ -135,8 +125,7 @@ object ModItems {
     val HEART_EGG: DeferredItem<Item> = registerItem(
             ItemConfig.Builder("heart_egg", mapOf("en_us" to "Heart Egg", "zh_cn" to "生命蛋")).func(::HeartEgg)
                     .props { (Item.Properties()).food(
-                            FoodProperties(4, 1.0f, true),
-                            Consumables.defaultFood().build()
+                            food(4, 1.0f, canAlwaysEat = true)
                     )}.creativeTab(ModCreativeModeTabs.DECISLAND_FOODS_TAB).build()
     )
 
@@ -144,8 +133,7 @@ object ModItems {
     val SPURT_EGG: DeferredItem<Item> = registerItem(
             ItemConfig.Builder("spurt_egg", mapOf("en_us" to "Spurt Egg", "zh_cn" to "迸发蛋")).func(::SpurtEgg)
                     .props { (Item.Properties()).food(
-                            FoodProperties(4, 1.0f, true),
-                            Consumables.defaultFood().build()
+                            food(4, 1.0f, canAlwaysEat = true)
                     )}.creativeTab(ModCreativeModeTabs.DECISLAND_FOODS_TAB).build()
     )
 
@@ -153,8 +141,7 @@ object ModItems {
     val ENDER_EGG: DeferredItem<Item> = registerItem(
             ItemConfig.Builder("ender_egg", mapOf("en_us" to "Ender Egg", "zh_cn" to "末影蛋")).func(::EnderEgg)
                     .props { (Item.Properties()).food(
-                            FoodProperties(4, 1.0f, true),
-                            Consumables.defaultFood().build()
+                            food(4, 1.0f, canAlwaysEat = true)
                     )}.creativeTab(ModCreativeModeTabs.DECISLAND_FOODS_TAB).build()
     )
 
@@ -341,7 +328,10 @@ object ModItems {
 //        DecIsland.LOGGER.info("Registering item: {}", config.name)
         ITEM_CONFIGS.add(config)
         ITEM_CONFIGS_BY_NAME[config.name] = config
-        return ITEMS.registerItem(config.name, config.func, config.props)
+        // Defer building the item properties to registry time: some properties
+        // reference other DeferredItems (e.g. FoodProperties.usingConvertsTo),
+        // which are only bound once the RegisterEvent fires.
+        return ITEMS.register(config.name, Supplier { config.func.apply(config.props.get()) })
     }
 
     @JvmStatic
@@ -366,6 +356,28 @@ object ModItems {
             ?.value()
     }
 
+    /** 1.21.1 兼容层：替代 1.21.4+ 的 `FoodProperties(...)` / `Consumables.defaultFood()` 组合。 */
+    private fun food(
+            nutrition: Int,
+            saturation: Float,
+            canAlwaysEat: Boolean = false,
+            eatSeconds: Float = 1.6f,
+            convertTo: ItemLike? = null,
+            effects: List<Pair<MobEffectInstance, Float>> = emptyList(),
+    ): FoodProperties {
+        val builder = FoodProperties.Builder().nutrition(nutrition).saturationModifier(saturation)
+        if (canAlwaysEat) {
+            builder.alwaysEdible()
+        }
+        if (convertTo != null) {
+            builder.usingConvertsTo(convertTo)
+        }
+        effects.forEach { builder.effect(it.first, it.second) }
+        val food = builder.build()
+        return if (eatSeconds == 1.6f) food
+        else FoodProperties(food.nutrition, food.saturation, food.canAlwaysEat, eatSeconds, food.usingConvertsTo, food.effects)
+    }
+
     private fun registerBoostConsumable(
             name: String,
             lang: Map<String, String>,
@@ -377,8 +389,7 @@ object ModItems {
                     .props {
                         Item.Properties()
                                 .food(
-                                        FoodProperties(0, 0.0f, true),
-                                        Consumables.defaultFood().build()
+                                        food(0, 0.0f, canAlwaysEat = true)
                                 )
                                 .useCooldown(cooldown)
                     }

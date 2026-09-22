@@ -1,17 +1,15 @@
 package com.dec.decisland.entity.projectile
 
-import com.dec.decisland.api.CustomInertia
 import com.dec.decisland.DecIsland
 import com.dec.decisland.entity.ModEntities
 import com.dec.decisland.item.ModItems
 import com.dec.decisland.network.Networking
-import net.minecraft.resources.Identifier
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.EntityType
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.item.ItemEntity
-import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrowableItemProjectile
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.Level
@@ -20,7 +18,7 @@ import net.minecraft.world.phys.BlockHitResult
 import net.minecraft.world.phys.EntityHitResult
 import net.minecraft.world.phys.Vec3
 
-class LapisBullet(entityType: EntityType<LapisBullet>, level: Level) : ThrowableItemProjectile(entityType, level), CustomInertia {
+class LapisBullet(entityType: EntityType<LapisBullet>, level: Level) : CustomInertiaProjectile(entityType, level) {
     constructor(level: Level, owner: LivingEntity, spawnedFrom: ItemStack) : this(ModEntities.LAPIS_BULLET.get(), level) {
         setOwner(owner)
         setItem(ItemStack(ModItems.LAPIS_BULLET_RENDER.get()))
@@ -35,7 +33,7 @@ class LapisBullet(entityType: EntityType<LapisBullet>, level: Level) : Throwable
         super.onHitEntity(result)
         val serverLevel = level() as? ServerLevel ?: return
         val target = result.entity
-        target.hurtServer(serverLevel, damageSources().thrown(this, getOwner()), BASE_DAMAGE)
+        target.hurt(damageSources().thrown(this, getOwner()), BASE_DAMAGE)
         explode(serverLevel, target.position())
         discard()
     }
@@ -63,7 +61,7 @@ class LapisBullet(entityType: EntityType<LapisBullet>, level: Level) : Throwable
         serverLevel.getEntities(this, AABB.ofSize(center, EXPLOSION_RADIUS * 2, EXPLOSION_RADIUS * 2, EXPLOSION_RADIUS * 2)) { target ->
             target.isAlive && target !is ItemEntity
         }.forEach { target ->
-            target.hurtServer(serverLevel, damageSource, SPLASH_DAMAGE)
+            target.hurt(damageSource, SPLASH_DAMAGE)
         }
     }
 
@@ -73,7 +71,7 @@ class LapisBullet(entityType: EntityType<LapisBullet>, level: Level) : Throwable
         private const val EXPLOSION_RADIUS: Double = 2.0
         private const val SPLASH_DAMAGE: Float = 4.0f
         private const val GROUND_PARTICLE_Y_OFFSET: Double = 0.05
-        private val BOOM_PARTICLE_ID: Identifier =
-            Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "lapis_bullet_boom_particle")
+        private val BOOM_PARTICLE_ID: ResourceLocation =
+            ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "lapis_bullet_boom_particle")
     }
 }

@@ -3,7 +3,7 @@ package com.dec.decisland.block.custom;
 import com.dec.decisland.DecIsland;
 import com.dec.decisland.network.Networking;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.ItemStack;
@@ -17,7 +17,7 @@ import net.minecraft.world.phys.Vec3;
 public class FlowerGhostBlock extends Block {
     private static final int MIN_LIFETIME_TICKS = 20;
     private static final int MAX_LIFETIME_TICKS = 40;
-    private static final Identifier DISAPPEAR_PARTICLE = Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "flower_ghost_block_particle");
+    private static final ResourceLocation DISAPPEAR_PARTICLE = ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "flower_ghost_block_particle");
 
     public FlowerGhostBlock(BlockBehaviour.Properties properties) {
         super(properties);
@@ -42,7 +42,7 @@ public class FlowerGhostBlock extends Block {
     }
 
     @Override
-    protected ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state, boolean includeData) {
+    public ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state) {
         return ItemStack.EMPTY;
     }
 }

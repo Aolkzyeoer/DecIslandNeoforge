@@ -41,15 +41,19 @@ import com.dec.decisland.entity.projectile.WinterEnergy
 import com.dec.decisland.entity.projectile.dart.DartDefinition
 import com.dec.decisland.entity.projectile.dart.DartEntity
 import com.dec.decisland.entity.projectile.dart.ModDarts
-import net.minecraft.resources.Identifier
+import net.minecraft.core.registries.Registries
+import net.minecraft.resources.ResourceLocation
+import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.EntityType
 import net.minecraft.world.entity.MobCategory
+import net.minecraft.world.level.Level
 import net.neoforged.bus.api.IEventBus
+import net.neoforged.neoforge.registries.DeferredHolder
 import net.neoforged.neoforge.registries.DeferredRegister
 import java.util.function.Supplier
 
 data class BulletEntityConfig(
-    val hitParticleIds: List<Identifier> = emptyList(),
+    val hitParticleIds: List<ResourceLocation> = emptyList(),
     val hitParticleChance: Double = 1.0,
 )
 
@@ -58,18 +62,30 @@ object ModEntities {
     var TYPE: EntityType<BlizzardEnergy>? = null
 
     @JvmField
-    val ENTITY_TYPES: DeferredRegister.Entities = DeferredRegister.createEntities(DecIsland.MOD_ID)
+    val ENTITY_TYPES: DeferredRegister<EntityType<*>> =
+        DeferredRegister.create(Registries.ENTITY_TYPE, DecIsland.MOD_ID)
+
+    private fun <T : Entity> registerEntity(
+        name: String,
+        factory: (EntityType<T>, Level) -> T,
+        category: MobCategory,
+        configure: EntityType.Builder<T>.() -> Unit = {},
+    ): DeferredHolder<EntityType<*>, EntityType<T>> =
+        ENTITY_TYPES.register(
+            name,
+            Supplier { EntityType.Builder.of(factory, category).apply(configure).build(name) },
+        )
 
     @JvmField
     val BLIZZARD_ENERGY: Supplier<EntityType<BlizzardEnergy>> =
-        ENTITY_TYPES.registerEntityType("blizzard_energy", ::BlizzardEnergy, MobCategory.MISC) { builder ->
-            builder.sized(0.5f, 0.5f)
+        registerEntity("blizzard_energy", { type, level -> BlizzardEnergy(type, level) }, MobCategory.MISC) {
+            sized(0.5f, 0.5f)
         }
 
     @JvmField
     val SNOW_ENERGY: Supplier<EntityType<SnowEnergy>> =
-        ENTITY_TYPES.registerEntityType("snow_energy", ::SnowEnergy, MobCategory.MISC) { builder ->
-            builder.sized(0.2f, 0.2f).clientTrackingRange(64).updateInterval(1)
+        registerEntity("snow_energy", { type, level -> SnowEnergy(type, level) }, MobCategory.MISC) {
+            sized(0.2f, 0.2f).clientTrackingRange(64).updateInterval(1)
         }
 
     @JvmField
@@ -142,194 +158,194 @@ object ModEntities {
 
     @JvmField
     val THROWN_ASH_PUFFERFISH: Supplier<EntityType<ThrownAshPufferfish>> =
-        ENTITY_TYPES.registerEntityType("thrown_ash_pufferfish", ::ThrownAshPufferfish, MobCategory.MISC) { builder ->
-            builder.sized(0.1f, 0.1f)
+        registerEntity("thrown_ash_pufferfish", { type, level -> ThrownAshPufferfish(type, level) }, MobCategory.MISC) {
+            sized(0.1f, 0.1f)
         }
 
     @JvmField
     val STICKY_ASH: Supplier<EntityType<ThrownStickyAsh>> =
-        ENTITY_TYPES.registerEntityType("sticky_ash", ::ThrownStickyAsh, MobCategory.MISC) { builder ->
-            builder.sized(0.25f, 0.25f).clientTrackingRange(64).updateInterval(1)
+        registerEntity("sticky_ash", { type, level -> ThrownStickyAsh(type, level) }, MobCategory.MISC) {
+            sized(0.25f, 0.25f).clientTrackingRange(64).updateInterval(1)
         }
 
     @JvmField
     val FROZEN_BALL: Supplier<EntityType<FrozenBallProjectile>> =
-        ENTITY_TYPES.registerEntityType("frozen_ball", ::FrozenBallProjectile, MobCategory.MISC) { builder ->
-            builder.sized(0.31f, 0.31f).clientTrackingRange(64).updateInterval(1)
+        registerEntity("frozen_ball", { type, level -> FrozenBallProjectile(type, level) }, MobCategory.MISC) {
+            sized(0.31f, 0.31f).clientTrackingRange(64).updateInterval(1)
         }
 
     @JvmField
     val MIND_CONTROLLER: Supplier<EntityType<MindControllerProjectile>> =
-        ENTITY_TYPES.registerEntityType("mind_controller", ::MindControllerProjectile, MobCategory.MISC) { builder ->
-            builder.sized(0.25f, 0.25f).clientTrackingRange(64).updateInterval(1)
+        registerEntity("mind_controller", { type, level -> MindControllerProjectile(type, level) }, MobCategory.MISC) {
+            sized(0.25f, 0.25f).clientTrackingRange(64).updateInterval(1)
         }
 
     @JvmField
     val MUDDY_BALL: Supplier<EntityType<MuddyBallProjectile>> =
-        ENTITY_TYPES.registerEntityType("muddy_ball", ::MuddyBallProjectile, MobCategory.MISC) { builder ->
-            builder.sized(0.25f, 0.25f).clientTrackingRange(64).updateInterval(1)
+        registerEntity("muddy_ball", { type, level -> MuddyBallProjectile(type, level) }, MobCategory.MISC) {
+            sized(0.25f, 0.25f).clientTrackingRange(64).updateInterval(1)
         }
 
     @JvmField
     val FIREFLY_BOTTLE: Supplier<EntityType<FireflyBottleProjectile>> =
-        ENTITY_TYPES.registerEntityType("firefly_bottle", ::FireflyBottleProjectile, MobCategory.MISC) { builder ->
-            builder.sized(0.1f, 0.1f).clientTrackingRange(64).updateInterval(1)
+        registerEntity("firefly_bottle", { type, level -> FireflyBottleProjectile(type, level) }, MobCategory.MISC) {
+            sized(0.1f, 0.1f).clientTrackingRange(64).updateInterval(1)
         }
 
     @JvmField
     val SMOKE_BOMB: Supplier<EntityType<SmokeBombProjectile>> =
-        ENTITY_TYPES.registerEntityType("smoke_bomb", ::SmokeBombProjectile, MobCategory.MISC) { builder ->
-            builder.sized(0.25f, 0.25f).clientTrackingRange(64).updateInterval(1)
+        registerEntity("smoke_bomb", { type, level -> SmokeBombProjectile(type, level) }, MobCategory.MISC) {
+            sized(0.25f, 0.25f).clientTrackingRange(64).updateInterval(1)
         }
 
     @JvmField
     val GAS_BOMB: Supplier<EntityType<GasBombProjectile>> =
-        ENTITY_TYPES.registerEntityType("gas_bomb", ::GasBombProjectile, MobCategory.MISC) { builder ->
-            builder.sized(0.25f, 0.25f).clientTrackingRange(64).updateInterval(1)
+        registerEntity("gas_bomb", { type, level -> GasBombProjectile(type, level) }, MobCategory.MISC) {
+            sized(0.25f, 0.25f).clientTrackingRange(64).updateInterval(1)
         }
 
     @JvmField
     val THROWABLE_BOMB: Supplier<EntityType<ThrowableBombProjectile>> =
-        ENTITY_TYPES.registerEntityType("throwable_bomb", ::ThrowableBombProjectile, MobCategory.MISC) { builder ->
-            builder.sized(0.1f, 0.1f).clientTrackingRange(64).updateInterval(1)
+        registerEntity("throwable_bomb", { type, level -> ThrowableBombProjectile(type, level) }, MobCategory.MISC) {
+            sized(0.1f, 0.1f).clientTrackingRange(64).updateInterval(1)
         }
 
     @JvmField
     val ENERGY_BALL: Supplier<EntityType<EnergyBall>> =
-        ENTITY_TYPES.registerEntityType("energy_ball", ::EnergyBall, MobCategory.MISC) { builder ->
-            builder.sized(0.8f, 0.8f).clientTrackingRange(64).updateInterval(1)
+        registerEntity("energy_ball", { type, level -> EnergyBall(type, level) }, MobCategory.MISC) {
+            sized(0.8f, 0.8f).clientTrackingRange(64).updateInterval(1)
         }
 
     @JvmField
     val AMETHYST_ENERGY_BALL: Supplier<EntityType<AmethystEnergyBall>> =
-        ENTITY_TYPES.registerEntityType("amethyst_energy_ball", ::AmethystEnergyBall, MobCategory.MISC) { builder ->
-            builder.sized(0.8f, 0.8f).clientTrackingRange(64).updateInterval(1)
+        registerEntity("amethyst_energy_ball", { type, level -> AmethystEnergyBall(type, level) }, MobCategory.MISC) {
+            sized(0.8f, 0.8f).clientTrackingRange(64).updateInterval(1)
         }
 
     @JvmField
     val GOLDEN_ENERGY_BALL: Supplier<EntityType<GoldenEnergyBall>> =
-        ENTITY_TYPES.registerEntityType("golden_energy_ball", ::GoldenEnergyBall, MobCategory.MISC) { builder ->
-            builder.sized(0.8f, 0.8f).clientTrackingRange(64).updateInterval(1)
+        registerEntity("golden_energy_ball", { type, level -> GoldenEnergyBall(type, level) }, MobCategory.MISC) {
+            sized(0.8f, 0.8f).clientTrackingRange(64).updateInterval(1)
         }
 
     @JvmField
     val LAPIS_BULLET: Supplier<EntityType<LapisBullet>> =
-        ENTITY_TYPES.registerEntityType("lapis_bullet", ::LapisBullet, MobCategory.MISC) { builder ->
-            builder.sized(0.31f, 0.31f).clientTrackingRange(64).updateInterval(1)
+        registerEntity("lapis_bullet", { type, level -> LapisBullet(type, level) }, MobCategory.MISC) {
+            sized(0.31f, 0.31f).clientTrackingRange(64).updateInterval(1)
         }
 
     @JvmField
     val CONCENTRATED_SOUL_BULLET: Supplier<EntityType<ConcentratedSoulBullet>> =
-        ENTITY_TYPES.registerEntityType("concentrated_soul_bullet", ::ConcentratedSoulBullet, MobCategory.MISC) { builder ->
-            builder.sized(0.8f, 0.8f).clientTrackingRange(64).updateInterval(1)
+        registerEntity("concentrated_soul_bullet", { type, level -> ConcentratedSoulBullet(type, level) }, MobCategory.MISC) {
+            sized(0.8f, 0.8f).clientTrackingRange(64).updateInterval(1)
         }
 
     @JvmField
     val JELLYFISH_BY_JELLYFISH_STAFF: Supplier<EntityType<JellyfishStaffProjectile>> =
-        ENTITY_TYPES.registerEntityType("jellyfish_by_jellyfish_staff", ::JellyfishStaffProjectile, MobCategory.MISC) { builder ->
-            builder.sized(0.31f, 0.31f).clientTrackingRange(64).updateInterval(1)
+        registerEntity("jellyfish_by_jellyfish_staff", { type, level -> JellyfishStaffProjectile(type, level) }, MobCategory.MISC) {
+            sized(0.31f, 0.31f).clientTrackingRange(64).updateInterval(1)
         }
 
     @JvmField
     val SOUL_WAKE_BULLET: Supplier<EntityType<SoulWakeBullet>> =
-        ENTITY_TYPES.registerEntityType("soul_wake_bullet", ::SoulWakeBullet, MobCategory.MISC) { builder ->
-            builder.sized(0.2f, 0.2f).clientTrackingRange(64).updateInterval(1)
+        registerEntity("soul_wake_bullet", { type, level -> SoulWakeBullet(type, level) }, MobCategory.MISC) {
+            sized(0.2f, 0.2f).clientTrackingRange(64).updateInterval(1)
         }
 
     @JvmField
     val STREAM_ENERGY_BALL: Supplier<EntityType<StreamEnergyBall>> =
-        ENTITY_TYPES.registerEntityType("stream_energy_ball", ::StreamEnergyBall, MobCategory.MISC) { builder ->
-            builder.sized(0.8f, 0.8f).clientTrackingRange(64).updateInterval(1)
+        registerEntity("stream_energy_ball", { type, level -> StreamEnergyBall(type, level) }, MobCategory.MISC) {
+            sized(0.8f, 0.8f).clientTrackingRange(64).updateInterval(1)
         }
 
     @JvmField
     val PURE_ENERGY_BALL: Supplier<EntityType<PureEnergyBall>> =
-        ENTITY_TYPES.registerEntityType("pure_energy_ball", ::PureEnergyBall, MobCategory.MISC) { builder ->
-            builder.sized(0.8f, 0.8f).clientTrackingRange(64).updateInterval(1)
+        registerEntity("pure_energy_ball", { type, level -> PureEnergyBall(type, level) }, MobCategory.MISC) {
+            sized(0.8f, 0.8f).clientTrackingRange(64).updateInterval(1)
         }
 
     @JvmField
     val SPOTS_BY_BOOK: Supplier<EntityType<SpotsByBook>> =
-        ENTITY_TYPES.registerEntityType("spots_by_book", ::SpotsByBook, MobCategory.MISC) { builder ->
-            builder.sized(0.31f, 0.31f).clientTrackingRange(64).updateInterval(1)
+        registerEntity("spots_by_book", { type, level -> SpotsByBook(type, level) }, MobCategory.MISC) {
+            sized(0.31f, 0.31f).clientTrackingRange(64).updateInterval(1)
         }
 
     @JvmField
     val SPOTS_OVERFLOW: Supplier<EntityType<SpotsOverflow>> =
-        ENTITY_TYPES.registerEntityType("spots_overflow", ::SpotsOverflow, MobCategory.MISC) { builder ->
-            builder.sized(0.2f, 0.2f).clientTrackingRange(64).updateInterval(1)
+        registerEntity("spots_overflow", { type, level -> SpotsOverflow(type, level) }, MobCategory.MISC) {
+            sized(0.2f, 0.2f).clientTrackingRange(64).updateInterval(1)
         }
 
     @JvmField
     val DEEP_ENERGY: Supplier<EntityType<DeepEnergy>> =
-        ENTITY_TYPES.registerEntityType("deep_energy", ::DeepEnergy, MobCategory.MISC) { builder ->
-            builder.sized(0.8f, 0.8f).clientTrackingRange(64).updateInterval(1)
+        registerEntity("deep_energy", { type, level -> DeepEnergy(type, level) }, MobCategory.MISC) {
+            sized(0.8f, 0.8f).clientTrackingRange(64).updateInterval(1)
         }
 
     @JvmField
     val FROZEN_ENERGY_BALL: Supplier<EntityType<FrozenEnergyBall>> =
-        ENTITY_TYPES.registerEntityType("frozen_energy_ball", ::FrozenEnergyBall, MobCategory.MISC) { builder ->
-            builder.sized(0.6f, 0.6f).clientTrackingRange(64).updateInterval(1)
+        registerEntity("frozen_energy_ball", { type, level -> FrozenEnergyBall(type, level) }, MobCategory.MISC) {
+            sized(0.6f, 0.6f).clientTrackingRange(64).updateInterval(1)
         }
 
     @JvmField
     val WINTER_ENERGY: Supplier<EntityType<WinterEnergy>> =
-        ENTITY_TYPES.registerEntityType("winter_energy", ::WinterEnergy, MobCategory.MISC) { builder ->
-            builder.sized(0.8f, 0.8f).clientTrackingRange(64).updateInterval(1)
+        registerEntity("winter_energy", { type, level -> WinterEnergy(type, level) }, MobCategory.MISC) {
+            sized(0.8f, 0.8f).clientTrackingRange(64).updateInterval(1)
         }
 
     @JvmField
     val THUNDER_BALL: Supplier<EntityType<ThunderBall>> =
-        ENTITY_TYPES.registerEntityType("thunder_ball", ::ThunderBall, MobCategory.MISC) { builder ->
-            builder.sized(0.9f, 0.9f).clientTrackingRange(64).updateInterval(1)
+        registerEntity("thunder_ball", { type, level -> ThunderBall(type, level) }, MobCategory.MISC) {
+            sized(0.9f, 0.9f).clientTrackingRange(64).updateInterval(1)
         }
 
     @JvmField
     val ENERGY_RAY: Supplier<EntityType<EnergyRay>> =
-        ENTITY_TYPES.registerEntityType("energy_ray", ::EnergyRay, MobCategory.MISC) { builder ->
-            builder.sized(0.2f, 0.2f).clientTrackingRange(64).updateInterval(1)
+        registerEntity("energy_ray", { type, level -> EnergyRay(type, level) }, MobCategory.MISC) {
+            sized(0.2f, 0.2f).clientTrackingRange(64).updateInterval(1)
         }
 
     @JvmField
     val AMETHYST_ENERGY_RAY: Supplier<EntityType<AmethystEnergyRay>> =
-        ENTITY_TYPES.registerEntityType("amethyst_energy_ray", ::AmethystEnergyRay, MobCategory.MISC) { builder ->
-            builder.sized(0.2f, 0.2f).clientTrackingRange(64).updateInterval(1)
+        registerEntity("amethyst_energy_ray", { type, level -> AmethystEnergyRay(type, level) }, MobCategory.MISC) {
+            sized(0.2f, 0.2f).clientTrackingRange(64).updateInterval(1)
         }
 
     @JvmField
     val FROZEN_RAY: Supplier<EntityType<FrozenRay>> =
-        ENTITY_TYPES.registerEntityType("frozen_ray", ::FrozenRay, MobCategory.MISC) { builder ->
-            builder.sized(0.2f, 0.2f).clientTrackingRange(64).updateInterval(1)
+        registerEntity("frozen_ray", { type, level -> FrozenRay(type, level) }, MobCategory.MISC) {
+            sized(0.2f, 0.2f).clientTrackingRange(64).updateInterval(1)
         }
 
     @JvmField
     val GROWING_ENERGY_RAY: Supplier<EntityType<GrowingEnergyRay>> =
-        ENTITY_TYPES.registerEntityType("growing_energy_ray", ::GrowingEnergyRay, MobCategory.MISC) { builder ->
-            builder.sized(0.31f, 0.31f).clientTrackingRange(64).updateInterval(1)
+        registerEntity("growing_energy_ray", { type, level -> GrowingEnergyRay(type, level) }, MobCategory.MISC) {
+            sized(0.31f, 0.31f).clientTrackingRange(64).updateInterval(1)
         }
 
     @JvmField
     val NIGHTMARE_SPORE: Supplier<EntityType<NightmareSpore>> =
-        ENTITY_TYPES.registerEntityType("nightmare_spore", ::NightmareSpore, MobCategory.MISC) { builder ->
-            builder.sized(0.4f, 0.4f).clientTrackingRange(64).updateInterval(1)
+        registerEntity("nightmare_spore", { type, level -> NightmareSpore(type, level) }, MobCategory.MISC) {
+            sized(0.4f, 0.4f).clientTrackingRange(64).updateInterval(1)
         }
 
     @JvmField
     val NIGHTMARE_RAY: Supplier<EntityType<NightmareRay>> =
-        ENTITY_TYPES.registerEntityType("nightmare_ray", ::NightmareRay, MobCategory.MISC) { builder ->
-            builder.sized(0.31f, 0.31f).clientTrackingRange(64).updateInterval(1)
+        registerEntity("nightmare_ray", { type, level -> NightmareRay(type, level) }, MobCategory.MISC) {
+            sized(0.31f, 0.31f).clientTrackingRange(64).updateInterval(1)
         }
 
     @JvmField
     val WAVE_ENERGY: Supplier<EntityType<WaveEnergy>> =
-        ENTITY_TYPES.registerEntityType("wave_energy", ::WaveEnergy, MobCategory.MISC) { builder ->
-            builder.sized(1.0f, 1.0f).clientTrackingRange(64).updateInterval(1)
+        registerEntity("wave_energy", { type, level -> WaveEnergy(type, level) }, MobCategory.MISC) {
+            sized(1.0f, 1.0f).clientTrackingRange(64).updateInterval(1)
         }
 
     @JvmField
     val STORM_FUSE: Supplier<EntityType<StormFuse>> =
-        ENTITY_TYPES.registerEntityType("storm_fuse", ::StormFuse, MobCategory.MISC) { builder ->
-            builder.sized(0.1f, 0.1f).clientTrackingRange(64).updateInterval(1)
+        registerEntity("storm_fuse", { type, level -> StormFuse(type, level) }, MobCategory.MISC) {
+            sized(0.1f, 0.1f).clientTrackingRange(64).updateInterval(1)
         }
 
     @JvmField
@@ -403,14 +419,14 @@ object ModEntities {
 
     @JvmField
     val PUMPKIN_BOMB: Supplier<EntityType<PumpkinBombEntity>> =
-        ENTITY_TYPES.registerEntityType("pumpkin_bomb", ::PumpkinBombEntity, MobCategory.MISC) { builder ->
-            builder.sized(0.5f, 0.5f).clientTrackingRange(8).updateInterval(10)
+        registerEntity("pumpkin_bomb", { type, level -> PumpkinBombEntity(type, level) }, MobCategory.MISC) {
+            sized(0.5f, 0.5f).clientTrackingRange(8).updateInterval(10)
         }
 
     @JvmField
     val WITHER_CLOUD: Supplier<EntityType<WitherCloudEntity>> =
-        ENTITY_TYPES.registerEntityType("wither_cloud", ::WitherCloudEntity, MobCategory.MISC) { builder ->
-            builder.sized(0.5f, 0.5f).clientTrackingRange(8).updateInterval(10)
+        registerEntity("wither_cloud", { type, level -> WitherCloudEntity(type, level) }, MobCategory.MISC) {
+            sized(0.5f, 0.5f).clientTrackingRange(8).updateInterval(10)
         }
 
     @JvmStatic
@@ -419,21 +435,24 @@ object ModEntities {
     }
 
     private fun registerFlintlockBullet(path: String): Supplier<EntityType<FlintlockBulletEntity>> =
-        ENTITY_TYPES.registerEntityType(path, ::FlintlockBulletEntity, MobCategory.MISC) { builder ->
-            builder.sized(0.2f, 0.2f).clientTrackingRange(64).updateInterval(10)
+        registerEntity(path, { type, level -> FlintlockBulletEntity(type, level) }, MobCategory.MISC) {
+            sized(0.2f, 0.2f).clientTrackingRange(64).updateInterval(10)
         }
 
     private fun registerDartEntity(
         definition: DartDefinition,
     ): Supplier<EntityType<DartEntity>> {
         DartEntity.registerDefinition(definition)
-        return ENTITY_TYPES.registerEntityType(definition.path, ::DartEntity, MobCategory.MISC) { builder ->
-            builder
-                .sized(definition.entitySettings.entityWidth, definition.entitySettings.entityHeight)
+        return registerEntity(
+            definition.path,
+            { type, level -> DartEntity(type, level) },
+            MobCategory.MISC,
+        ) {
+            sized(definition.entitySettings.entityWidth, definition.entitySettings.entityHeight)
                 .clientTrackingRange(definition.entitySettings.clientTrackingRange)
                 .updateInterval(definition.entitySettings.updateInterval)
         }.also(definition::bindEntityTypeSupplier)
     }
 
-    private fun id(path: String): Identifier = Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, path)
+    private fun id(path: String): ResourceLocation = ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, path)
 }

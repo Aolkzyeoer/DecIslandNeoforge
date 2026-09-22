@@ -1,7 +1,7 @@
 package com.dec.decisland.network
 
 import com.dec.decisland.DecIsland
-import net.minecraft.resources.Identifier
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.entity.Entity
@@ -60,7 +60,7 @@ object Networking {
     }
 
     @JvmStatic
-    fun sendBedrockEmitter(player: ServerPlayer, particleId: Identifier, position: Vec3, durationTicks: Int = 40) {
+    fun sendBedrockEmitter(player: ServerPlayer, particleId: ResourceLocation, position: Vec3, durationTicks: Int = 40) {
         PacketDistributor.sendToPlayer(
             player,
             SpawnBedrockEmitterPayload(particleId, position.x, position.y, position.z, durationTicks),
@@ -68,7 +68,7 @@ object Networking {
     }
 
     @JvmStatic
-    fun sendBedrockEmitterToTracking(entity: Entity, particleId: Identifier, position: Vec3, durationTicks: Int = 2) {
+    fun sendBedrockEmitterToTracking(entity: Entity, particleId: ResourceLocation, position: Vec3, durationTicks: Int = 2) {
         PacketDistributor.sendToPlayersTrackingEntity(
             entity,
             SpawnBedrockEmitterPayload(particleId, position.x, position.y, position.z, durationTicks),
@@ -78,7 +78,7 @@ object Networking {
     @JvmStatic
     fun sendBedrockEmitterToNearby(
         level: ServerLevel,
-        particleId: Identifier,
+        particleId: ResourceLocation,
         position: Vec3,
         radius: Double = 64.0,
         durationTicks: Int = 2,

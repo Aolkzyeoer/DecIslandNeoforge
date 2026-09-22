@@ -3,7 +3,7 @@ package com.dec.decisland.item.custom
 import com.dec.decisland.DecIsland
 import net.minecraft.core.component.DataComponents
 import net.minecraft.nbt.CompoundTag
-import net.minecraft.resources.Identifier
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.component.CustomData
@@ -37,7 +37,7 @@ open class BambooKatana(properties: Properties) : Katana(properties) {
         val customData = stack.get(DataComponents.CUSTOM_DATA)
         val tag = customData?.copyTag() ?: CompoundTag()
         val attackCount = if (tag.contains(ATTACK_COUNTER_KEY)) {
-            tag.getInt(ATTACK_COUNTER_KEY).get()
+            tag.getInt(ATTACK_COUNTER_KEY)
         } else {
             0
         }
@@ -45,7 +45,7 @@ open class BambooKatana(properties: Properties) : Katana(properties) {
     }
 
     companion object {
-        private val BAMBOO_KATANA_PARTICLE_ID: Identifier =
-            Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "bamboo_katana_particle")
+        private val BAMBOO_KATANA_PARTICLE_ID: ResourceLocation =
+            ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "bamboo_katana_particle")
     }
 }

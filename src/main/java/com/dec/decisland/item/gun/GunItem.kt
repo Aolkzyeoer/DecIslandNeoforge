@@ -3,15 +3,16 @@ package com.dec.decisland.item.gun
 import com.dec.decisland.DecIsland
 import com.dec.decisland.entity.projectile.FlintlockBulletEntity
 import com.dec.decisland.item.category.Weapon
+import com.dec.decisland.item.compat.ItemCompat
 import com.dec.decisland.network.Networking
 import net.minecraft.core.registries.BuiltInRegistries
-import net.minecraft.resources.Identifier
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.sounds.SoundEvent
 import net.minecraft.sounds.SoundSource
 import net.minecraft.world.InteractionHand
-import net.minecraft.world.InteractionResult
+import net.minecraft.world.InteractionResultHolder
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.EquipmentSlot
 import net.minecraft.world.entity.ai.attributes.AttributeModifier
@@ -41,7 +42,7 @@ data class GunConfig(
     val sneakMovementSpeedAddition: Double = 0.0,
     val recoilPitchUpDegrees: Float = 2.5f,
     val recoilYawDegrees: Float = 1.0f,
-    val muzzleParticleId: Identifier = Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "flintlock_smoke_particle"),
+    val muzzleParticleId: ResourceLocation = ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "flintlock_smoke_particle"),
     val shootSound: SoundEvent,
     val shootSoundVolume: Float = 1.0f,
     val shootSoundPitchMin: Float = 0.85f,
@@ -52,32 +53,33 @@ open class GunItem(
     properties: Properties,
     private val config: GunConfig,
 ) : Item(properties) {
-    private val movementSpeedModifierId: Identifier = run {
+    private val movementSpeedModifierId: ResourceLocation = run {
         val key = BuiltInRegistries.ENTITY_TYPE.getKey(config.bulletType)
-        Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "gun_movement_speed/${key.namespace}/${key.path}")
+        ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "gun_movement_speed/${key.namespace}/${key.path}")
     }
 
-    override fun use(level: Level, player: Player, usedHand: InteractionHand): InteractionResult {
+    override fun use(level: Level, player: Player, usedHand: InteractionHand): InteractionResultHolder<ItemStack> {
         val stack = player.getItemInHand(usedHand)
-        if (player.cooldowns.isOnCooldown(stack)) {
-            return InteractionResult.FAIL
+        if (player.cooldowns.isOnCooldown(stack.item)) {
+            return InteractionResultHolder.fail(stack)
         }
 
         if (!level.isClientSide) {
-            val serverLevel = level as? ServerLevel ?: return InteractionResult.FAIL
+            val serverLevel = level as? ServerLevel ?: return InteractionResultHolder.fail(stack)
             if (!consumeAmmo(player)) {
-                return InteractionResult.FAIL
+                return InteractionResultHolder.fail(stack)
             }
             shoot(serverLevel, player, usedHand, stack)
         }
 
         player.swing(usedHand, true)
-        return if (level.isClientSide) InteractionResult.SUCCESS else InteractionResult.SUCCESS_SERVER
+        return InteractionResultHolder.sidedSuccess(stack, level.isClientSide)
     }
 
-    override fun inventoryTick(stack: ItemStack, level: ServerLevel, entity: net.minecraft.world.entity.Entity, slot: EquipmentSlot?) {
-        super.inventoryTick(stack, level, entity, slot)
+    override fun inventoryTick(stack: ItemStack, level: Level, entity: net.minecraft.world.entity.Entity, slotId: Int, isSelected: Boolean) {
+        super.inventoryTick(stack, level, entity, slotId, isSelected)
         val player = entity as? Player ?: return
+        val slot = ItemCompat.slotFromIndex(slotId)
         if (slot != EquipmentSlot.MAINHAND && slot != EquipmentSlot.OFFHAND) {
             removeMovementModifier(player)
             return
@@ -120,7 +122,7 @@ open class GunItem(
         }
 
         val bulletItem = Weapon.FLINTLOCK_BULLET.get()
-        for (stack in player.inventory.nonEquipmentItems) {
+        for (stack in player.inventory.items) {
             if (!stack.isEmpty() && stack.`is`(bulletItem)) {
                 stack.shrink(1)
                 return true
@@ -135,7 +137,7 @@ open class GunItem(
     }
 
     protected open fun shoot(serverLevel: ServerLevel, player: Player, usedHand: InteractionHand, stack: ItemStack) {
-        player.cooldowns.addCooldown(stack, config.cooldownTicks)
+        player.cooldowns.addCooldown(stack.item, config.cooldownTicks)
 
         val random = player.random
         val pitch = config.shootSoundPitchMin + (random.nextFloat() * (config.shootSoundPitchMax - config.shootSoundPitchMin))

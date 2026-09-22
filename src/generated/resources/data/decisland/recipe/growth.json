@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "#": {
+      "item": "decisland:iron_stick"
+    },
+    "A": {
+      "item": "minecraft:glow_berries"
+    },
+    "B": {
+      "item": "minecraft:vine"
+    },
+    "X": {
+      "item": "decisland:pure_ingot"
+    }
+  },
+  "pattern": [
+    "AXA",
+    "AXA",
+    "B#B"
+  ],
+  "result": {
+    "count": 1,
+    "id": "decisland:growth"
+  }
+}

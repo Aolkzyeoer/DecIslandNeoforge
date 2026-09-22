@@ -1,8 +1,8 @@
 package com.dec.decisland.datagen.RecipeProvider
 
 import net.minecraft.advancements.Criterion
-import net.minecraft.advancements.criterion.ItemPredicate
-import net.minecraft.advancements.criterion.InventoryChangeTrigger
+import net.minecraft.advancements.critereon.ItemPredicate
+import net.minecraft.advancements.critereon.InventoryChangeTrigger
 import net.minecraft.tags.TagKey
 import net.minecraft.world.item.Item
 import net.minecraft.world.level.ItemLike
@@ -15,7 +15,7 @@ object RecipeCriteria {
 
     fun hasTag(tag: TagKey<Item>): UnlockCriterion =
         UnlockCriterion.of(hasTagName(tag)) { items ->
-            InventoryChangeTrigger.TriggerInstance.hasItems(ItemPredicate.Builder.item().of(items, tag))
+            InventoryChangeTrigger.TriggerInstance.hasItems(ItemPredicate.Builder.item().of(tag))
         }
 
     fun custom(name: String, criterion: Criterion<*>): UnlockCriterion =

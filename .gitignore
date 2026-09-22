@@ -29,4 +29,5 @@ _tmp_fabric_source
 _tmp_bedrock_source
 
 generated
+!src/generated/
 .*

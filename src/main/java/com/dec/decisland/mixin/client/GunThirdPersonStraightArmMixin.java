@@ -2,7 +2,7 @@ package com.dec.decisland.mixin.client;
 
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelPart;
-import net.minecraft.client.renderer.entity.state.HumanoidRenderState;
+import net.minecraft.world.entity.LivingEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -14,17 +14,19 @@ public abstract class GunThirdPersonStraightArmMixin {
     @Shadow public ModelPart head;
     @Shadow public ModelPart rightArm;
     @Shadow public ModelPart leftArm;
+    @Shadow public HumanoidModel.ArmPose rightArmPose;
+    @Shadow public HumanoidModel.ArmPose leftArmPose;
 
-    @Inject(method = "setupAnim(Lnet/minecraft/client/renderer/entity/state/HumanoidRenderState;)V", at = @At("TAIL"))
-    private void decisland$straightGunArms(HumanoidRenderState state, CallbackInfo ci) {
-        if (state == null) {
+    @Inject(method = "setupAnim(Lnet/minecraft/world/entity/LivingEntity;FFFFF)V", at = @At("TAIL"))
+    private void decisland$straightGunArms(LivingEntity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, CallbackInfo ci) {
+        if (entity == null) {
             return;
         }
 
-        boolean rightGun = state.rightArmPose == HumanoidModel.ArmPose.BOW_AND_ARROW;
-        boolean leftGun = state.leftArmPose == HumanoidModel.ArmPose.BOW_AND_ARROW;
-        boolean rightSupport = state.rightArmPose == HumanoidModel.ArmPose.CROSSBOW_HOLD;
-        boolean leftSupport = state.leftArmPose == HumanoidModel.ArmPose.CROSSBOW_HOLD;
+        boolean rightGun = this.rightArmPose == HumanoidModel.ArmPose.BOW_AND_ARROW;
+        boolean leftGun = this.leftArmPose == HumanoidModel.ArmPose.BOW_AND_ARROW;
+        boolean rightSupport = this.rightArmPose == HumanoidModel.ArmPose.CROSSBOW_HOLD;
+        boolean leftSupport = this.leftArmPose == HumanoidModel.ArmPose.CROSSBOW_HOLD;
         if (!rightGun && !leftGun && !rightSupport && !leftSupport) {
             return;
         }

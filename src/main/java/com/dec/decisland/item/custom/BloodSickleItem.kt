@@ -2,16 +2,18 @@ package com.dec.decisland.item.custom
 
 import com.dec.decisland.DecIsland
 import com.dec.decisland.events.AccessoryCombatEffects
+import com.dec.decisland.item.compat.asEquipmentSlot
 import com.dec.decisland.mana.ManaManager
-import net.minecraft.resources.Identifier
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.stats.Stats
 import net.minecraft.world.InteractionHand
-import net.minecraft.world.InteractionResult
+import net.minecraft.world.InteractionResultHolder
+import net.minecraft.world.entity.EquipmentSlot
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.item.ItemStack
-import net.minecraft.world.item.ItemUseAnimation
+import net.minecraft.world.item.UseAnim
 import net.minecraft.world.level.Level
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
@@ -25,19 +27,19 @@ class BloodSickleItem(
         slotChanged || !newStack.`is`(oldStack.item)
 
     // Starts the blood-drain channel when the player right clicks with enough mana.
-    override fun use(level: Level, player: Player, hand: InteractionHand): InteractionResult {
+    override fun use(level: Level, player: Player, hand: InteractionHand): InteractionResultHolder<ItemStack> {
+        val stack = player.getItemInHand(hand)
         // Let the client enter the using state immediately so minor mana sync delays do not
         // cause the hand animation to pop in and out while the server validates the channel.
         if (level.isClientSide) {
             player.startUsingItem(hand)
-            return InteractionResult.CONSUME
+            return InteractionResultHolder.consume(stack)
         }
 
         if (!canUseActiveSkill(player, MANA_COST)) {
-            return InteractionResult.FAIL
+            return InteractionResultHolder.fail(stack)
         }
 
-        val stack = player.getItemInHand(hand)
         channelStates[player.uuid] = ChannelState(
             nextPulseTick = level.gameTime + CHANNEL_INTERVAL_TICKS,
             nextParticleTick = level.gameTime,
@@ -47,7 +49,7 @@ class BloodSickleItem(
         AccessoryCombatEffects.onSuccessfulWeaponUse(player, stack)
 
         player.startUsingItem(hand)
-        return InteractionResult.CONSUME
+        return InteractionResultHolder.consume(stack)
     }
 
     // Pulses the life-drain effect every fixed interval while also keeping the particle loop alive.
@@ -89,7 +91,7 @@ class BloodSickleItem(
             spawnParticle(serverLevel, BLOOD_SEEP_PARTICLE_ID, target.position(), PARTICLE_DURATION_TICKS)
             player.heal(HEAL_PER_PULSE)
             if (player.random.nextBoolean()) {
-                stack.hurtAndBreak(1, player, player.usedItemHand.asEquipmentSlot())
+                stack.hurtAndBreak(1, player, player.usedItemHand?.asEquipmentSlot() ?: EquipmentSlot.MAINHAND)
             }
         }
 
@@ -98,18 +100,18 @@ class BloodSickleItem(
     }
 
     // Clears the blood-drain channel state when the player releases right click.
-    override fun releaseUsing(stack: ItemStack, level: Level, livingEntity: LivingEntity, timeCharged: Int): Boolean {
+    override fun releaseUsing(stack: ItemStack, level: Level, livingEntity: LivingEntity, timeCharged: Int) {
         if (livingEntity is Player) {
             channelStates.remove(livingEntity.uuid)
         }
-        return super.releaseUsing(stack, level, livingEntity, timeCharged)
+        super.releaseUsing(stack, level, livingEntity, timeCharged)
     }
 
     // Keeps the blood-drain channel alive while the player holds right click.
     override fun getUseDuration(stack: ItemStack, entity: LivingEntity): Int = CHANNELED_USE_DURATION
 
     // Shows a holding pose during the blood-drain channel.
-    override fun getUseAnimation(stack: ItemStack): ItemUseAnimation = ItemUseAnimation.BLOCK
+    override fun getUseAnimation(stack: ItemStack): UseAnim = UseAnim.BLOCK
 
     companion object {
         private const val CHANNELED_USE_DURATION: Int = 72000
@@ -130,9 +132,9 @@ class BloodSickleItem(
 
         private val channelStates: MutableMap<UUID, ChannelState> = ConcurrentHashMap()
 
-        private val BLOOD_BALL_PARTICLE_ID: Identifier =
-            Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "blood_spore_ball_particle")
-        private val BLOOD_SEEP_PARTICLE_ID: Identifier =
-            Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "blood_spore_seep_particle")
+        private val BLOOD_BALL_PARTICLE_ID: ResourceLocation =
+            ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "blood_spore_ball_particle")
+        private val BLOOD_SEEP_PARTICLE_ID: ResourceLocation =
+            ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "blood_spore_seep_particle")
     }
 }

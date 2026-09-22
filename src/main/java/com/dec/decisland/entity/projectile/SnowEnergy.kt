@@ -1,11 +1,11 @@
-package com.dec.decisland.entity.projectile
+﻿package com.dec.decisland.entity.projectile
 import com.dec.decisland.DecIsland
 import com.dec.decisland.entity.ModEntities
 import com.dec.decisland.network.Networking
 import net.minecraft.core.particles.ItemParticleOption
 import net.minecraft.core.particles.ParticleTypes
 import net.minecraft.network.syncher.SynchedEntityData
-import net.minecraft.resources.Identifier
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.effect.MobEffectInstance
 import net.minecraft.world.effect.MobEffects
@@ -60,7 +60,7 @@ class SnowEnergy(entityType: EntityType<SnowEnergy>, level: Level) : Projectile(
             if (tickCount % 4 == 0) {
                 Networking.sendBedrockEmitterToNearby(
                     level() as ServerLevel,
-                    Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "everlasting_winter_wake_particle"),
+                    ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "everlasting_winter_wake_particle"),
                     position(),
                     64.0,
                     4,
@@ -80,7 +80,7 @@ class SnowEnergy(entityType: EntityType<SnowEnergy>, level: Level) : Projectile(
         val target: Entity = result.entity
         target.hurt(damageSources().thrown(this, getOwner()), 4.0f)
         if (target is LivingEntity) {
-            target.addEffect(MobEffectInstance(MobEffects.SLOWNESS, 200, 1))
+            target.addEffect(MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 200, 1))
         }
         spawnHitParticles()
         discard()

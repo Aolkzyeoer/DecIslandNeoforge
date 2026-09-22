@@ -36,7 +36,7 @@ import net.minecraft.client.Minecraft
 import net.minecraft.client.renderer.entity.EntityRenderers
 import net.minecraft.client.renderer.entity.EntityRendererProvider
 import net.minecraft.client.renderer.entity.ThrownItemRenderer
-import net.minecraft.resources.Identifier
+import net.minecraft.resources.ResourceLocation
 import net.neoforged.api.distmarker.Dist
 import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.fml.common.EventBusSubscriber
@@ -107,8 +107,8 @@ object ModClientEvents {
         EntityRenderers.register(ModEntities.SPOTS_BY_BOOK.get()) { context ->
             BedrockProjectileRenderer<SpotsByBook>(
                 context,
-                Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "bedrock/models/entity/spots.geometry.json"),
-                Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "bedrock/animations/entity/spots.animation.json"),
+                ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "bedrock/models/entity/spots.geometry.json"),
+                ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "bedrock/animations/entity/spots.animation.json"),
                 "animation.spots.spinning",
                 entityTexture("spots"),
                 1.0f,
@@ -169,8 +169,8 @@ object ModClientEvents {
     @JvmStatic
     fun registerRenderers(event: EntityRenderersEvent.RegisterRenderers) {
     }
-    private fun entityTexture(path: String): Identifier =
-        Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "textures/entity/$path.png")
+    private fun entityTexture(path: String): ResourceLocation =
+        ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "textures/entity/$path.png")
 
     private fun <T : net.minecraft.world.entity.Entity> ballRenderer(
         context: EntityRendererProvider.Context,
@@ -178,8 +178,8 @@ object ModClientEvents {
         scale: Float,
     ): BedrockProjectileRenderer<T> = BedrockProjectileRenderer(
         context,
-        Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "bedrock/models/entity/energy_ball.geometry.json"),
-        Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "bedrock/animations/entity/energy_ball.animation.json"),
+        ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "bedrock/models/entity/energy_ball.geometry.json"),
+        ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "bedrock/animations/entity/energy_ball.animation.json"),
         "animation.energy_ball.fly",
         entityTexture(texturePath),
         scale,

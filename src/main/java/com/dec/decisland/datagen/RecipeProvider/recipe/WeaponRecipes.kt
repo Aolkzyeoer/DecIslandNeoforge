@@ -88,7 +88,7 @@ object WeaponRecipes {
     fun build(context: RecipeContext) {
         RecipeDsl.save(
             context,
-            daggerRecipe("wooden_dagger", Weapon.WOODEN_DAGGER.get(), RecipeIngredient.tag(ItemTags.WOODEN_TOOL_MATERIALS), Items.STICK),
+            daggerRecipe("wooden_dagger", Weapon.WOODEN_DAGGER.get(), RecipeIngredient.tag(ItemTags.PLANKS), Items.STICK),
         )
         RecipeDsl.save(
             context,
@@ -129,7 +129,7 @@ object WeaponRecipes {
                 .build(),
         )
 
-        daggerNuggetRecipes("copper_dagger", Weapon.COPPER_DAGGER.get(), Items.COPPER_NUGGET).forEach { RecipeDsl.save(context, it) }
+        // 1.21.1 没有铜粒（COPPER_NUGGET），无法生成铜匕首的熔炼回收配方。
         daggerNuggetRecipes("diamond_dagger", Weapon.DIAMOND_DAGGER.get(), Material.DIAMOND_NUGGET.get()).forEach { RecipeDsl.save(context, it) }
         daggerNuggetRecipes("emerald_dagger", Weapon.EMERALD_DAGGER.get(), Material.EMERALD_NUGGET.get()).forEach { RecipeDsl.save(context, it) }
         daggerNuggetRecipes("golden_dagger", Weapon.GOLDEN_DAGGER.get(), Items.GOLD_NUGGET).forEach { RecipeDsl.save(context, it) }

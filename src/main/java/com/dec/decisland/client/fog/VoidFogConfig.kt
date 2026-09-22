@@ -4,14 +4,14 @@ import com.dec.decisland.DecIsland
 import com.google.gson.Gson
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
-import net.minecraft.resources.Identifier
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.packs.resources.ResourceManager
 import java.io.InputStreamReader
 import kotlin.math.max
 
 object VoidFogConfig {
     private val gson = Gson()
-    private val configId = Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "fog/void.json")
+    private val configId = ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "fog/void.json")
 
     @Volatile
     private var loaded = false
@@ -35,14 +35,14 @@ object VoidFogConfig {
         }
     }
 
-    fun specFor(biomeId: Identifier?): FogSpec {
+    fun specFor(biomeId: ResourceLocation?): FogSpec {
         val current = config
         return biomeId?.let { current.byBiome[it] } ?: current.global
     }
 
     fun globalSpec(): FogSpec = config.global
 
-    fun tintRgb(r: Float, g: Float, b: Float, biomeId: Identifier?): FloatArray {
+    fun tintRgb(r: Float, g: Float, b: Float, biomeId: ResourceLocation?): FloatArray {
         val current = config
         var rr = r
         var gg = g
@@ -137,7 +137,7 @@ object VoidFogConfig {
 
     data class FogConfig(
         val global: FogSpec,
-        val byBiome: Map<Identifier, FogSpec>,
+        val byBiome: Map<ResourceLocation, FogSpec>,
     ) {
         companion object {
             fun defaults(): FogConfig = FogConfig(
@@ -149,13 +149,13 @@ object VoidFogConfig {
                     alphaMul = 1.0f,
                 ),
                 byBiome = mapOf(
-                    Identifier.fromNamespaceAndPath("minecraft", "ice_spikes") to FogSpec(0xB9F6FF, 0.45f, 0.78f, 0.58f, 1.0f),
-                    Identifier.fromNamespaceAndPath("minecraft", "snowy_taiga") to FogSpec(0xA8C8FF, 0.28f, 0.84f, 0.66f, 1.0f),
-                    Identifier.fromNamespaceAndPath("minecraft", "grove") to FogSpec(0x9FC3FF, 0.30f, 0.82f, 0.62f, 1.0f),
-                    Identifier.fromNamespaceAndPath("minecraft", "forest") to FogSpec(0x93C8A0, 0.18f, 0.88f, 0.70f, 1.0f),
-                    Identifier.fromNamespaceAndPath("minecraft", "birch_forest") to FogSpec(0xA6D7AE, 0.16f, 0.90f, 0.72f, 1.0f),
-                    Identifier.fromNamespaceAndPath("minecraft", "river") to FogSpec(0x6AA5FF, 0.25f, 0.82f, 0.60f, 1.0f),
-                    Identifier.fromNamespaceAndPath("minecraft", "frozen_river") to FogSpec(0xA3E6FF, 0.30f, 0.80f, 0.58f, 1.0f),
+                    ResourceLocation.fromNamespaceAndPath("minecraft", "ice_spikes") to FogSpec(0xB9F6FF, 0.45f, 0.78f, 0.58f, 1.0f),
+                    ResourceLocation.fromNamespaceAndPath("minecraft", "snowy_taiga") to FogSpec(0xA8C8FF, 0.28f, 0.84f, 0.66f, 1.0f),
+                    ResourceLocation.fromNamespaceAndPath("minecraft", "grove") to FogSpec(0x9FC3FF, 0.30f, 0.82f, 0.62f, 1.0f),
+                    ResourceLocation.fromNamespaceAndPath("minecraft", "forest") to FogSpec(0x93C8A0, 0.18f, 0.88f, 0.70f, 1.0f),
+                    ResourceLocation.fromNamespaceAndPath("minecraft", "birch_forest") to FogSpec(0xA6D7AE, 0.16f, 0.90f, 0.72f, 1.0f),
+                    ResourceLocation.fromNamespaceAndPath("minecraft", "river") to FogSpec(0x6AA5FF, 0.25f, 0.82f, 0.60f, 1.0f),
+                    ResourceLocation.fromNamespaceAndPath("minecraft", "frozen_river") to FogSpec(0xA3E6FF, 0.30f, 0.80f, 0.58f, 1.0f),
                 ),
             )
 
@@ -167,7 +167,7 @@ object VoidFogConfig {
                         if (!value.isJsonObject) {
                             return@forEach
                         }
-                        val id = Identifier.tryParse(key) ?: return@forEach
+                        val id = ResourceLocation.tryParse(key) ?: return@forEach
                         put(id, FogSpec.fromJson(value.asJsonObject))
                     }
                 }

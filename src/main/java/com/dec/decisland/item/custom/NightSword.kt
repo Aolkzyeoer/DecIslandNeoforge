@@ -2,13 +2,15 @@ package com.dec.decisland.item.custom
 
 import com.dec.decisland.DecIsland
 import com.dec.decisland.entity.projectile.NightmareSpore
+import com.dec.decisland.item.compat.ItemCompat
+import com.dec.decisland.item.compat.asEquipmentSlot
 import com.dec.decisland.mana.ManaManager
-import net.minecraft.resources.Identifier
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.sounds.SoundEvents
 import net.minecraft.sounds.SoundSource
 import net.minecraft.world.InteractionHand
-import net.minecraft.world.InteractionResult
+import net.minecraft.world.InteractionResultHolder
 import net.minecraft.world.effect.MobEffectInstance
 import net.minecraft.world.effect.MobEffects
 import net.minecraft.world.entity.Entity
@@ -16,22 +18,22 @@ import net.minecraft.world.entity.EquipmentSlot
 import net.minecraft.world.entity.ai.attributes.AttributeModifier
 import net.minecraft.world.entity.ai.attributes.Attributes
 import net.minecraft.world.entity.player.Player
-import net.minecraft.world.entity.projectile.Projectile
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.Level
 
 class NightSword(properties: Properties) : Item(properties) {
-    override fun use(level: Level, player: Player, hand: InteractionHand): InteractionResult {
+    override fun use(level: Level, player: Player, hand: InteractionHand): InteractionResultHolder<ItemStack> {
+        val stack = player.getItemInHand(hand)
         if (level.isClientSide) {
-            return InteractionResult.SUCCESS
+            return InteractionResultHolder.success(stack)
         }
 
-        val serverLevel = level as? ServerLevel ?: return InteractionResult.FAIL
+        val serverLevel = level as? ServerLevel ?: return InteractionResultHolder.fail(stack)
         val isDay = isDaytime(level)
         val manaCost = if (isDay) DAY_MANA_COST else NIGHT_MANA_COST
         if (ManaManager.getCurrentMana(player) <= manaCost) {
-            return InteractionResult.FAIL
+            return InteractionResultHolder.fail(stack)
         }
 
         ManaManager.reduceMana(player, manaCost)
@@ -42,19 +44,20 @@ class NightSword(properties: Properties) : Item(properties) {
 
         val powers = if (isDay) DAY_SPORE_POWERS else NIGHT_SPORE_POWERS
         powers.forEach { launchPower ->
-            val projectile = NightmareSpore(serverLevel, player, player.getItemInHand(hand))
+            val projectile = NightmareSpore(serverLevel, player, stack)
             projectile.shootFromRotation(player, player.xRot, player.yRot, 0.0f, launchPower * SPORE_BASE_SPEED, SPORE_INACCURACY)
             serverLevel.addFreshEntity(projectile)
         }
 
-        player.getItemInHand(hand).hurtAndBreak(if (isDay) 2 else 1, player, hand.asEquipmentSlot())
+        stack.hurtAndBreak(if (isDay) 2 else 1, player, hand.asEquipmentSlot())
         player.swing(hand, true)
-        return InteractionResult.SUCCESS_SERVER
+        return InteractionResultHolder.sidedSuccess(stack, level.isClientSide)
     }
 
-    override fun inventoryTick(stack: ItemStack, level: ServerLevel, entity: Entity, slot: EquipmentSlot?) {
-        super.inventoryTick(stack, level, entity, slot)
+    override fun inventoryTick(stack: ItemStack, level: Level, entity: Entity, slotId: Int, isSelected: Boolean) {
+        super.inventoryTick(stack, level, entity, slotId, isSelected)
         val player = entity as? Player ?: return
+        val slot = ItemCompat.slotFromIndex(slotId)
         if (slot != EquipmentSlot.MAINHAND && slot != EquipmentSlot.OFFHAND) {
             removeMovementSpeedModifier(player)
             return
@@ -90,8 +93,8 @@ class NightSword(properties: Properties) : Item(properties) {
     }
 
     companion object {
-        private val MOVEMENT_SPEED_MODIFIER_ID: Identifier =
-            Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "movement_speed/night_sword")
+        private val MOVEMENT_SPEED_MODIFIER_ID: ResourceLocation =
+            ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "movement_speed/night_sword")
         private const val MOVEMENT_SPEED_ADDITION: Double = 0.01
         private const val SPORE_BASE_SPEED: Float = 4.0f
         private const val SPORE_INACCURACY: Float = 70.0f

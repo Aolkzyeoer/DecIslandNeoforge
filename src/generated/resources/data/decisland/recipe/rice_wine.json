@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "#": {
+      "item": "decisland:wine_glass"
+    },
+    "X": {
+      "item": "decisland:rice"
+    }
+  },
+  "pattern": [
+    "X ",
+    "# "
+  ],
+  "result": {
+    "count": 1,
+    "id": "decisland:rice_wine"
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_glass_ingot": {
+      "conditions": {
+        "items": [
+          {
+            "items": "decisland:glass_ingot"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "decisland:glass_axe"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_glass_ingot"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "decisland:glass_axe"
+    ]
+  }
+}

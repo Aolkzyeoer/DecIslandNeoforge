@@ -5,7 +5,7 @@ import net.minecraft.network.FriendlyByteBuf
 import net.minecraft.network.codec.ByteBufCodecs
 import net.minecraft.network.codec.StreamCodec
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload
-import net.minecraft.resources.Identifier
+import net.minecraft.resources.ResourceLocation
 
 class RecoilPayload(
     val pitchUpDegrees: Float,
@@ -15,7 +15,7 @@ class RecoilPayload(
 
     companion object {
         @JvmField
-        val ID: Identifier = Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "recoil_s2c")
+        val ID: ResourceLocation = ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "recoil_s2c")
 
         @JvmField
         val TYPE: CustomPacketPayload.Type<RecoilPayload> = CustomPacketPayload.Type(ID)

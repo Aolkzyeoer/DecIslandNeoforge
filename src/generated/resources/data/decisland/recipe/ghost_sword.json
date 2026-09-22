@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "A": {
+      "item": "decisland:ghost_ingot"
+    },
+    "X": {
+      "item": "decisland:ice_rod"
+    }
+  },
+  "pattern": [
+    "A",
+    "A",
+    "X"
+  ],
+  "result": {
+    "count": 1,
+    "id": "decisland:ghost_sword"
+  }
+}

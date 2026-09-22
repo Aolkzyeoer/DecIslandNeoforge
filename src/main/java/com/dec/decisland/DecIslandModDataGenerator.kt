@@ -16,9 +16,10 @@ import net.neoforged.neoforge.data.event.GatherDataEvent
 
 @EventBusSubscriber(modid = DecIsland.MOD_ID)
 object DecIslandModDataGenerator {
+    // 1.21.1 的 GatherDataEvent 没有 Client/Server 子类，客户端/服务端由 includeClient()/includeServer() 区分。
     @SubscribeEvent
     @JvmStatic
-    fun gatherData(event: GatherDataEvent.Client) {
+    fun gatherData(event: GatherDataEvent) {
         event.createProvider(::ModModelsProvider)
         event.createProvider(::ModDataMapProvider)
         event.createProvider(::ModRecipeProvider)
@@ -39,7 +40,12 @@ object DecIslandModDataGenerator {
             )
         }
 
-        event.createProvider(::ModBlockTagsProvider)
-        event.createProvider(::ModItemTagsProvider)
+        // 1.21.1 的 TagsProvider 构造需要 ExistingFileHelper；ItemTagsProvider 还需要方块标签的 TagLookup。
+        val blockTags = event.createProvider { output, lookupProvider ->
+            ModBlockTagsProvider(output, lookupProvider, event.existingFileHelper)
+        }
+        event.createProvider { output, lookupProvider ->
+            ModItemTagsProvider(output, lookupProvider, blockTags.contentsGetter(), event.existingFileHelper)
+        }
     }
 }

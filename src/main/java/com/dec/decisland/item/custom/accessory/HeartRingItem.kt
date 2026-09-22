@@ -15,7 +15,7 @@ class HeartRingItem(properties: Properties) : Item(properties), AccessoryProcIte
     override fun triggerAccessoryProc(serverLevel: ServerLevel, player: Player, weaponStack: ItemStack, accessoryStack: ItemStack) {
         player.heal(4.0f)
         if (player.random.nextDouble() < 0.5) {
-            player.addEffect(MobEffectInstance(MobEffects.STRENGTH, 100, 0))
+            player.addEffect(MobEffectInstance(MobEffects.DAMAGE_BOOST, 100, 0))
         }
 
         serverLevel.sendParticles(

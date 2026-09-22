@@ -14,30 +14,21 @@ import net.minecraft.data.recipes.RecipeOutput
 import net.minecraft.data.recipes.RecipeProvider
 import java.util.concurrent.CompletableFuture
 
+// 1.21.1 的 RecipeProvider 没有 Runner 内部类，直接继承并在 buildRecipes(RecipeOutput) 中生成。
+// getName() 在 1.21.1 中是 final，不可覆写。
 class ModRecipeProvider(
     output: PackOutput,
-    lookupProvider: CompletableFuture<HolderLookup.Provider>,
-) : RecipeProvider.Runner(output, lookupProvider) {
-    override fun createRecipeProvider(
-        lookupProvider: HolderLookup.Provider,
-        recipeOutput: RecipeOutput,
-    ): RecipeProvider = DecIslandRecipes(lookupProvider, recipeOutput)
-
-    override fun getName(): String = "DecIsland Recipes"
-
-    private class DecIslandRecipes(
-        lookupProvider: HolderLookup.Provider,
-        private val recipeOutput: RecipeOutput,
-    ) : RecipeProvider(lookupProvider, recipeOutput) {
-        override fun buildRecipes() {
-            val context = RecipeContext(registries, recipeOutput)
-            MaterialRecipes.build(context)
-            FoodRecipes.build(context)
-            FishRecipes.build(context)
-            WeaponRecipes.build(context)
-            ToolRecipes.build(context)
-            SummonItemRecipes.build(context)
-            CookingRecipes.build(context)
-        }
+    private val lookupProvider: CompletableFuture<HolderLookup.Provider>,
+) : RecipeProvider(output, lookupProvider) {
+    override fun buildRecipes(recipeOutput: RecipeOutput) {
+        // buildRecipes 由 registries.thenCompose 调用，此时 future 已完成，join() 不会阻塞。
+        val context = RecipeContext(lookupProvider.join(), recipeOutput)
+        MaterialRecipes.build(context)
+        FoodRecipes.build(context)
+        FishRecipes.build(context)
+        WeaponRecipes.build(context)
+        ToolRecipes.build(context)
+        SummonItemRecipes.build(context)
+        CookingRecipes.build(context)
     }
 }

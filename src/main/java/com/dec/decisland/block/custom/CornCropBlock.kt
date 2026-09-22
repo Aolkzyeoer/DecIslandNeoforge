@@ -9,14 +9,15 @@ import net.minecraft.sounds.SoundSource
 import net.minecraft.util.RandomSource
 import net.minecraft.world.InteractionHand
 import net.minecraft.world.InteractionResult
+import net.minecraft.world.ItemInteractionResult
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.context.BlockPlaceContext
 import net.minecraft.world.level.BlockGetter
 import net.minecraft.world.level.Level
+import net.minecraft.world.level.LevelAccessor
 import net.minecraft.world.level.LevelReader
-import net.minecraft.world.level.ScheduledTickAccess
 import net.minecraft.world.level.block.Block
 import net.minecraft.world.level.block.Blocks
 import net.minecraft.world.level.block.BonemealableBlock
@@ -95,16 +96,14 @@ class CornCropBlock(properties: BlockBehaviour.Properties) : DoublePlantBlock(pr
 
     override fun updateShape(
         state: BlockState,
-        level: LevelReader,
-        tickAccess: ScheduledTickAccess,
-        pos: BlockPos,
         direction: Direction,
-        neighborPos: BlockPos,
         neighborState: BlockState,
-        random: RandomSource,
+        level: LevelAccessor,
+        pos: BlockPos,
+        neighborPos: BlockPos,
     ): BlockState {
         if (state.getValue(HALF) == DoubleBlockHalf.UPPER) {
-            return super.updateShape(state, level, tickAccess, pos, direction, neighborPos, neighborState, random)
+            return super.updateShape(state, direction, neighborState, level, pos, neighborPos)
         }
         return if (state.canSurvive(level, pos)) state else Blocks.AIR.defaultBlockState()
     }
@@ -159,9 +158,10 @@ class CornCropBlock(properties: BlockBehaviour.Properties) : DoublePlantBlock(pr
         player: Player,
         hand: InteractionHand,
         hitResult: BlockHitResult,
-    ): InteractionResult {
+    ): ItemInteractionResult {
         if (canHarvest(state)) {
-            return harvest(state, level, pos, player)
+            harvest(state, level, pos, player)
+            return ItemInteractionResult.SUCCESS
         }
         return super.useItemOn(stack, state, level, pos, player, hand, hitResult)
     }
@@ -174,7 +174,8 @@ class CornCropBlock(properties: BlockBehaviour.Properties) : DoublePlantBlock(pr
         hitResult: BlockHitResult,
     ): InteractionResult {
         if (canHarvest(state)) {
-            return harvest(state, level, pos, player)
+            harvest(state, level, pos, player)
+            return InteractionResult.SUCCESS
         }
         return super.useWithoutItem(state, level, pos, player, hitResult)
     }
@@ -241,7 +242,7 @@ class CornCropBlock(properties: BlockBehaviour.Properties) : DoublePlantBlock(pr
         level: Level,
         pos: BlockPos,
         player: Player,
-    ): InteractionResult {
+    ) {
         if (level is ServerLevel) {
             for (drop in getDrops(state, level, pos, null)) {
                 popResource(level, pos, drop)
@@ -260,7 +261,6 @@ class CornCropBlock(properties: BlockBehaviour.Properties) : DoublePlantBlock(pr
             level.setBlock(pos, newState, UPDATE_CLIENTS)
             level.gameEvent(GameEvent.BLOCK_CHANGE, pos, GameEvent.Context.of(player, newState))
         }
-        return InteractionResult.SUCCESS
     }
 
     companion object {

@@ -1,47 +1,83 @@
 package com.dec.decisland.datagen
 
-import com.dec.decisland.DecIsland
 import com.dec.decisland.block.BlockConfig
 import com.dec.decisland.block.ModBlocks
 import com.dec.decisland.item.ItemConfig
 import com.dec.decisland.item.ModItems
-import net.minecraft.client.data.models.BlockModelGenerators
-import net.minecraft.client.data.models.ItemModelGenerators
-import net.minecraft.client.data.models.ModelProvider
-import net.minecraft.core.Holder
+import com.google.gson.JsonElement
+import net.minecraft.data.CachedOutput
+import net.minecraft.data.DataProvider
 import net.minecraft.data.PackOutput
+import net.minecraft.data.models.BlockModelGenerators
+import net.minecraft.data.models.blockstates.BlockStateGenerator
+import net.minecraft.data.models.model.ModelLocationUtils
+import net.minecraft.data.models.model.TextureMapping
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.item.BlockItem
 import net.minecraft.world.item.Item
 import net.minecraft.world.level.block.Block
-import java.util.Collections
-import java.util.IdentityHashMap
-import java.util.stream.Stream
+import java.nio.file.Path
+import java.util.concurrent.CompletableFuture
+import java.util.function.BiConsumer
+import java.util.function.Consumer
+import java.util.function.Supplier
 
-class ModModelsProvider(output: PackOutput) : ModelProvider(output, DecIsland.MOD_ID) {
-    override fun registerModels(blockModels: BlockModelGenerators, itemModels: ItemModelGenerators) {
+// 1.21.1 的 ModelProvider 没有 1.21.4 的子类扩展点（registerModels/getKnownItems/getKnownBlocks），
+// 因此这里自建 DataProvider，按同样的方式收集并写出模型与 blockstate JSON。
+class ModModelsProvider(output: PackOutput) : DataProvider {
+    private val blockStatePathProvider = output.createPathProvider(PackOutput.Target.RESOURCE_PACK, "blockstates")
+    private val modelPathProvider = output.createPathProvider(PackOutput.Target.RESOURCE_PACK, "models")
+
+    override fun run(cachedOutput: CachedOutput): CompletableFuture<*> {
+        val blockStateGenerators = LinkedHashMap<Block, BlockStateGenerator>()
+        val blockStateOutput = Consumer<BlockStateGenerator> { generator ->
+            val previous = blockStateGenerators.put(generator.block, generator)
+            check(previous == null) { "Duplicate blockstate definition for ${generator.block}" }
+        }
+        val models = LinkedHashMap<ResourceLocation, Supplier<JsonElement>>()
+        val modelOutput = BiConsumer<ResourceLocation, Supplier<JsonElement>> { location, supplier ->
+            val previous = models.put(location, supplier)
+            check(previous == null) { "Duplicate model definition for $location" }
+        }
+        val blockModelGenerators = BlockModelGenerators(blockStateOutput, modelOutput) { item: Item -> }
+
+        // 保持原有顺序：先生成物品模型，再生成方块模型。
         ModItems.ITEMS.getEntries().forEach { item ->
             val currentItem: Item = item.get()
             if (currentItem is BlockItem) return@forEach
             val config: ItemConfig = ItemConfig.getConfig(currentItem) ?: return@forEach
-            itemModels.generateFlatItem(currentItem, config.modelTemplate)
+            // 对应 ItemModelGenerators.generateFlatItem(item, modelTemplate)（1.21.1 中为 private）。
+            config.modelTemplate.create(
+                ModelLocationUtils.getModelLocation(currentItem),
+                TextureMapping.layer0(currentItem),
+                modelOutput,
+            )
         }
 
         ModBlocks.BLOCKS.getEntries().forEach { block ->
             val currentBlock: Block = block.get()
             val config: BlockConfig = BlockConfig.getConfig(currentBlock) ?: return@forEach
-            config.blockModelGenerator.accept(blockModels)
+            config.blockModelGenerator.accept(blockModelGenerators)
         }
+
+        return CompletableFuture.allOf(
+            saveCollection(cachedOutput, blockStateGenerators) { block ->
+                blockStatePathProvider.json(block.builtInRegistryHolder().key().location())
+            },
+            saveCollection(cachedOutput, models, modelPathProvider::json),
+        )
     }
 
-    override fun getKnownItems(): Stream<out Holder<Item>> = ModItems.ITEMS.getEntries().stream()
-
-    override fun getKnownBlocks(): Stream<out Holder<Block>> {
-        val generatedBlocks = Collections.newSetFromMap(IdentityHashMap<Block, Boolean>())
-        ModBlocks.getBlockConfigs().forEach { config ->
-            generatedBlocks.add(ModBlocks.getBlockByConfig(config).value())
+    private fun <T> saveCollection(
+        output: CachedOutput,
+        map: Map<T, Supplier<JsonElement>>,
+        resolvePath: (T) -> Path,
+    ): CompletableFuture<*> {
+        val futures = map.map { (key, supplier) ->
+            DataProvider.saveStable(output, supplier.get(), resolvePath(key))
         }
-        return ModBlocks.BLOCKS.getEntries()
-            .stream()
-            .filter { generatedBlocks.contains(it.get()) }
+        return CompletableFuture.allOf(*futures.toTypedArray())
     }
+
+    override fun getName(): String = "Model Definitions"
 }

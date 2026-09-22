@@ -6,10 +6,10 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.ItemInHandRenderer;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
@@ -48,7 +48,7 @@ public class GunHoldHandsMixin {
     }
 
     @Inject(
-        method = "renderArmWithItem(Lnet/minecraft/client/player/AbstractClientPlayer;FFLnet/minecraft/world/InteractionHand;FLnet/minecraft/world/item/ItemStack;FLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;I)V",
+        method = "renderArmWithItem(Lnet/minecraft/client/player/AbstractClientPlayer;FFLnet/minecraft/world/InteractionHand;FLnet/minecraft/world/item/ItemStack;FLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V",
         at = @At("HEAD")
     )
     private void decisland$gunFirstPersonPose(
@@ -60,7 +60,7 @@ public class GunHoldHandsMixin {
         ItemStack stack,
         float equipProgress,
         PoseStack poseStack,
-        SubmitNodeCollector nodeCollector,
+        MultiBufferSource buffer,
         int packedLight,
         CallbackInfo ci
     ) {
@@ -194,7 +194,7 @@ public class GunHoldHandsMixin {
 
     private static boolean isShortFlintlock(ItemStack stack) {
         try {
-            Identifier id = BuiltInRegistries.ITEM.getKey(stack.getItem());
+            ResourceLocation id = BuiltInRegistries.ITEM.getKey(stack.getItem());
             return id != null && "short_flintlock".equals(id.getPath());
         } catch (Throwable ignored) {
             return false;

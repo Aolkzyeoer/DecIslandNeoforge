@@ -2,16 +2,17 @@ package com.dec.decisland.item.custom
 
 import com.dec.decisland.DecIsland
 import com.dec.decisland.events.AccessoryCombatEffects
+import com.dec.decisland.item.compat.ItemCompat
 import com.dec.decisland.mana.ManaManager
 import com.dec.decisland.network.Networking
 import net.minecraft.core.Holder
 import net.minecraft.core.component.DataComponents
 import net.minecraft.nbt.CompoundTag
-import net.minecraft.resources.Identifier
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.stats.Stats
 import net.minecraft.world.InteractionHand
-import net.minecraft.world.InteractionResult
+import net.minecraft.world.InteractionResultHolder
 import net.minecraft.world.effect.MobEffect
 import net.minecraft.world.effect.MobEffectInstance
 import net.minecraft.world.entity.Entity
@@ -23,7 +24,7 @@ import net.minecraft.world.entity.decoration.ArmorStand
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
-import net.minecraft.world.item.ItemUseAnimation
+import net.minecraft.world.item.UseAnim
 import net.minecraft.world.item.component.CustomData
 import net.minecraft.world.level.Level
 import net.minecraft.world.phys.AABB
@@ -33,37 +34,37 @@ open class SickleItem(
     properties: Properties,
     protected val config: SickleConfig,
 ) : Item(properties) {
-    private val movementSpeedModifierId: Identifier =
-        Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "movement_speed/${config.name}")
+    private val movementSpeedModifierId: ResourceLocation =
+        ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "movement_speed/${config.name}")
 
     // Handles right click for both instant skills and channeled skills.
-    override fun use(level: Level, player: Player, hand: InteractionHand): InteractionResult {
-        val activeSkill = config.activeSkill ?: return InteractionResult.PASS
+    override fun use(level: Level, player: Player, hand: InteractionHand): InteractionResultHolder<ItemStack> {
+        val stack = player.getItemInHand(hand)
+        val activeSkill = config.activeSkill ?: return InteractionResultHolder.pass(stack)
         if (activeSkill.channelIntervalTicks > 0) {
             if (!canUseActiveSkill(player, activeSkill.manaCost)) {
-                return InteractionResult.FAIL
+                return InteractionResultHolder.fail(stack)
             }
 
             if (!level.isClientSide) {
                 initializeChannelState(
-                    player.getItemInHand(hand),
+                    stack,
                     level.gameTime,
                     activeSkill.channelIntervalTicks,
                     activeSkill.particleIntervalTicks,
                 )
                 player.awardStat(Stats.ITEM_USED.get(this))
-                AccessoryCombatEffects.onSuccessfulWeaponUse(player, player.getItemInHand(hand))
+                AccessoryCombatEffects.onSuccessfulWeaponUse(player, stack)
             }
             player.startUsingItem(hand)
-            return InteractionResult.CONSUME
+            return InteractionResultHolder.consume(stack)
         }
 
-        val serverLevel = level as? ServerLevel ?: return InteractionResult.FAIL
+        val serverLevel = level as? ServerLevel ?: return InteractionResultHolder.fail(stack)
         if (!canUseActiveSkill(player, activeSkill.manaCost)) {
-            return InteractionResult.FAIL
+            return InteractionResultHolder.fail(stack)
         }
 
-        val stack = player.getItemInHand(hand)
         spawnParticle(serverLevel, activeSkill.casterParticleId, player.position(), activeSkill.particleDurationTicks)
         val hitCount = applyActiveSkill(serverLevel, player, stack, activeSkill, selectRandomTarget = false)
         ManaManager.reduceMana(player, activeSkill.manaCost)
@@ -74,7 +75,7 @@ open class SickleItem(
         player.awardStat(Stats.ITEM_USED.get(this))
         AccessoryCombatEffects.onSuccessfulWeaponUse(player, stack)
         player.swing(hand, true)
-        return InteractionResult.SUCCESS_SERVER
+        return InteractionResultHolder.sidedSuccess(stack, level.isClientSide)
     }
 
     // Ticks a channeled active skill using server game time so pulse spacing stays stable.
@@ -115,9 +116,9 @@ open class SickleItem(
     }
 
     // Clears channel timers when the player releases right click.
-    override fun releaseUsing(stack: ItemStack, level: Level, livingEntity: LivingEntity, timeCharged: Int): Boolean {
+    override fun releaseUsing(stack: ItemStack, level: Level, livingEntity: LivingEntity, timeCharged: Int) {
         clearChannelState(stack)
-        return super.releaseUsing(stack, level, livingEntity, timeCharged)
+        super.releaseUsing(stack, level, livingEntity, timeCharged)
     }
 
     // Gives channeled sickles a long use duration so holding right click can continue.
@@ -125,28 +126,29 @@ open class SickleItem(
         if ((config.activeSkill?.channelIntervalTicks ?: 0) > 0) CHANNELED_USE_DURATION else super.getUseDuration(stack, entity)
 
     // Uses a blocking pose for channeled sickles so the player has visible feedback while channeling.
-    override fun getUseAnimation(stack: ItemStack): ItemUseAnimation =
-        if ((config.activeSkill?.channelIntervalTicks ?: 0) > 0) ItemUseAnimation.BLOCK else super.getUseAnimation(stack)
+    override fun getUseAnimation(stack: ItemStack): UseAnim =
+        if ((config.activeSkill?.channelIntervalTicks ?: 0) > 0) UseAnim.BLOCK else super.getUseAnimation(stack)
 
     // Applies the passive extra damage and proc effects on melee hit.
-    override fun hurtEnemy(stack: ItemStack, target: LivingEntity, attacker: LivingEntity) {
+    override fun hurtEnemy(stack: ItemStack, target: LivingEntity, attacker: LivingEntity): Boolean {
         if (attacker.level().isClientSide) {
-            return
+            return false
         }
 
-        val serverLevel = attacker.level() as? ServerLevel ?: return
+        val serverLevel = attacker.level() as? ServerLevel ?: return false
         applyPassiveEffect(serverLevel, attacker, target, config.passiveSkill.baseExtraDamage, emptyList())
         config.passiveSkill.procs.forEach { proc ->
             if (attacker.random.nextInt(proc.chanceDenominator) == 0) {
                 applyPassiveProc(serverLevel, attacker, target, proc)
             }
         }
+        return true
     }
 
     // Keeps hand-held movement modifiers in sync while the sickle is equipped.
-    override fun inventoryTick(stack: ItemStack, level: ServerLevel, entity: Entity, slot: EquipmentSlot?) {
-        super.inventoryTick(stack, level, entity, slot)
-        updateMovementSpeedModifier(entity, slot, config.movementSpeedAddition, movementSpeedModifierId)
+    override fun inventoryTick(stack: ItemStack, level: Level, entity: Entity, slotId: Int, isSelected: Boolean) {
+        super.inventoryTick(stack, level, entity, slotId, isSelected)
+        updateMovementSpeedModifier(entity, ItemCompat.slotFromIndex(slotId), config.movementSpeedAddition, movementSpeedModifierId)
     }
 
     // Finds active-skill targets and applies effects either to all targets or one random target.
@@ -254,7 +256,7 @@ open class SickleItem(
         } else {
             serverLevel.damageSources().mobAttack(attacker)
         }
-        val hurt = target.hurtServer(serverLevel, damageSource, damage)
+        val hurt = target.hurt(damageSource, damage)
         if (!hurt) {
             target.invulnerableTime = originalInvulnerableTime
         }
@@ -262,7 +264,7 @@ open class SickleItem(
     }
 
     // Spawns a bedrock emitter at the supplied world position.
-    protected fun spawnParticle(serverLevel: ServerLevel, particleId: Identifier?, position: Vec3, durationTicks: Int) {
+    protected fun spawnParticle(serverLevel: ServerLevel, particleId: ResourceLocation?, position: Vec3, durationTicks: Int) {
         if (particleId == null) {
             return
         }
@@ -272,7 +274,7 @@ open class SickleItem(
     // Spawns swing particles one block in front of the attacker, matching Bedrock's `^^^1` behavior.
     protected fun spawnHolderFrontParticle(
         serverLevel: ServerLevel,
-        particleId: Identifier?,
+        particleId: ResourceLocation?,
         attacker: LivingEntity,
         durationTicks: Int,
     ) {
@@ -310,13 +312,13 @@ open class SickleItem(
     // Reads the next pulse timestamp, or falls back to the supplied default if the stack has no state yet.
     protected fun getNextPulseTick(stack: ItemStack, defaultValue: Long): Long {
         val tag = readTag(stack)
-        return if (tag.contains(NEXT_PULSE_TICK_KEY)) tag.getLong(NEXT_PULSE_TICK_KEY).get() else defaultValue
+        return if (tag.contains(NEXT_PULSE_TICK_KEY)) tag.getLong(NEXT_PULSE_TICK_KEY) else defaultValue
     }
 
     // Reads the next particle timestamp, or falls back to the supplied default if the stack has no state yet.
     protected fun getNextParticleTick(stack: ItemStack, defaultValue: Long): Long {
         val tag = readTag(stack)
-        return if (tag.contains(NEXT_PARTICLE_TICK_KEY)) tag.getLong(NEXT_PARTICLE_TICK_KEY).get() else defaultValue
+        return if (tag.contains(NEXT_PARTICLE_TICK_KEY)) tag.getLong(NEXT_PARTICLE_TICK_KEY) else defaultValue
     }
 
     // Stores the next server tick when the channeled skill may deal damage again.
@@ -336,7 +338,7 @@ open class SickleItem(
     // Reads the configured particle interval for the current channel session.
     protected fun getParticleIntervalTicks(stack: ItemStack, defaultValue: Int): Int {
         val tag = readTag(stack)
-        return if (tag.contains(PARTICLE_INTERVAL_TICKS_KEY)) tag.getInt(PARTICLE_INTERVAL_TICKS_KEY).get() else defaultValue
+        return if (tag.contains(PARTICLE_INTERVAL_TICKS_KEY)) tag.getInt(PARTICLE_INTERVAL_TICKS_KEY) else defaultValue
     }
 
     // Clears all temporary channeling state from the stack.
@@ -352,7 +354,7 @@ open class SickleItem(
     // Reads the UUID of the previous random target, if one was stored on the stack.
     protected fun getLastRandomTargetId(stack: ItemStack): String? {
         val tag = readTag(stack)
-        return if (tag.contains(LAST_RANDOM_TARGET_KEY)) tag.getString(LAST_RANDOM_TARGET_KEY).orElse(null) else null
+        return if (tag.contains(LAST_RANDOM_TARGET_KEY)) tag.getString(LAST_RANDOM_TARGET_KEY) else null
     }
 
     // Stores the UUID of the most recent random target so the next pulse can avoid repeating it.
@@ -375,7 +377,7 @@ open class SickleItem(
         entity: Entity,
         slot: EquipmentSlot?,
         amount: Double,
-        modifierId: Identifier,
+        modifierId: ResourceLocation,
     ) {
         val player = entity as? Player ?: return
         if (slot != EquipmentSlot.MAINHAND && slot != EquipmentSlot.OFFHAND) {
@@ -406,7 +408,7 @@ open class SickleItem(
     }
 
     // Removes the transient movement-speed modifier if it is present.
-    private fun removeMovementSpeedModifier(player: Player, modifierId: Identifier) {
+    private fun removeMovementSpeedModifier(player: Player, modifierId: ResourceLocation) {
         val attribute = player.getAttribute(Attributes.MOVEMENT_SPEED) ?: return
         if (attribute.getModifier(modifierId) != null) {
             attribute.removeModifier(modifierId)
@@ -488,10 +490,10 @@ open class SickleItem(
         val effects: List<EffectConfig> = builder.effects.toList()
 
         @JvmField
-        val holderParticleId: Identifier? = builder.holderParticleId
+        val holderParticleId: ResourceLocation? = builder.holderParticleId
 
         @JvmField
-        val targetParticleId: Identifier? = builder.targetParticleId
+        val targetParticleId: ResourceLocation? = builder.targetParticleId
 
         @JvmField
         val particleDurationTicks: Int = builder.particleDurationTicks
@@ -499,8 +501,8 @@ open class SickleItem(
         class Builder(@JvmField val chanceDenominator: Int) {
             internal var extraDamage: Float = 0.0f
             internal val effects: MutableList<EffectConfig> = mutableListOf()
-            internal var holderParticleId: Identifier? = null
-            internal var targetParticleId: Identifier? = null
+            internal var holderParticleId: ResourceLocation? = null
+            internal var targetParticleId: ResourceLocation? = null
             internal var particleDurationTicks: Int = 6
 
             // Sets the extra damage dealt when this proc succeeds.
@@ -514,12 +516,12 @@ open class SickleItem(
             }
 
             // Sets the particle emitted in front of the attacker when this proc succeeds.
-            fun holderParticleId(holderParticleId: Identifier?): Builder = apply {
+            fun holderParticleId(holderParticleId: ResourceLocation?): Builder = apply {
                 this.holderParticleId = holderParticleId
             }
 
             // Sets the particle emitted on the target when this proc succeeds.
-            fun targetParticleId(targetParticleId: Identifier?): Builder = apply {
+            fun targetParticleId(targetParticleId: ResourceLocation?): Builder = apply {
                 this.targetParticleId = targetParticleId
             }
 
@@ -553,10 +555,10 @@ open class SickleItem(
         val selfEffectsOnHit: List<EffectConfig> = builder.selfEffectsOnHit.toList()
 
         @JvmField
-        val casterParticleId: Identifier? = builder.casterParticleId
+        val casterParticleId: ResourceLocation? = builder.casterParticleId
 
         @JvmField
-        val targetParticleId: Identifier? = builder.targetParticleId
+        val targetParticleId: ResourceLocation? = builder.targetParticleId
 
         @JvmField
         val particleDurationTicks: Int = builder.particleDurationTicks
@@ -583,8 +585,8 @@ open class SickleItem(
             internal var extraDamage: Float = 0.0f
             internal val targetEffects: MutableList<EffectConfig> = mutableListOf()
             internal val selfEffectsOnHit: MutableList<EffectConfig> = mutableListOf()
-            internal var casterParticleId: Identifier? = null
-            internal var targetParticleId: Identifier? = null
+            internal var casterParticleId: ResourceLocation? = null
+            internal var targetParticleId: ResourceLocation? = null
             internal var particleDurationTicks: Int = 6
             internal var channelIntervalTicks: Int = 0
             internal var particleIntervalTicks: Int = 1
@@ -623,12 +625,12 @@ open class SickleItem(
             }
 
             // Sets the particle emitted on the user while the active skill fires.
-            fun casterParticleId(casterParticleId: Identifier?): Builder = apply {
+            fun casterParticleId(casterParticleId: ResourceLocation?): Builder = apply {
                 this.casterParticleId = casterParticleId
             }
 
             // Sets the particle emitted on each target hit by the active skill.
-            fun targetParticleId(targetParticleId: Identifier?): Builder = apply {
+            fun targetParticleId(targetParticleId: ResourceLocation?): Builder = apply {
                 this.targetParticleId = targetParticleId
             }
 

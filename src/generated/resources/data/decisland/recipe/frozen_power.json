@@ -1,0 +1,31 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "decisland:frozen_power_debris"
+    },
+    {
+      "item": "decisland:frozen_power_debris"
+    },
+    {
+      "item": "decisland:frozen_power_debris"
+    },
+    {
+      "item": "decisland:frozen_power_debris"
+    },
+    {
+      "item": "decisland:frozen_power_debris"
+    },
+    {
+      "item": "decisland:frozen_power_debris"
+    },
+    {
+      "item": "decisland:frozen_power_debris"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "decisland:frozen_power"
+  }
+}

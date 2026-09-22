@@ -1,25 +1,23 @@
 package com.dec.decisland.client.renderer
 
-import com.dec.decisland.DecIsland
 import com.dec.decisland.client.model.ClothesModel
 import net.minecraft.client.Minecraft
-import net.minecraft.client.model.Model
-import net.minecraft.client.renderer.entity.layers.EquipmentLayerRenderer
-import net.minecraft.client.resources.model.EquipmentClientInfo
-import net.minecraft.core.registries.BuiltInRegistries
-import net.minecraft.resources.Identifier
+import net.minecraft.client.model.HumanoidModel
+import net.minecraft.world.entity.EquipmentSlot
+import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.item.ItemStack
 import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions
 
 object MaskClientItemExtensions : IClientItemExtensions {
-    private var cachedModel: ClothesModel<net.minecraft.client.renderer.entity.state.HumanoidRenderState>? = null
+    private var cachedModel: ClothesModel<LivingEntity>? = null
 
     override fun getHumanoidArmorModel(
+        livingEntity: LivingEntity,
         itemStack: ItemStack,
-        layerType: EquipmentClientInfo.LayerType,
-        original: Model<*>,
-    ): Model<*> {
-        if (layerType != EquipmentClientInfo.LayerType.HUMANOID) {
+        equipmentSlot: EquipmentSlot,
+        original: HumanoidModel<*>,
+    ): HumanoidModel<*> {
+        if (equipmentSlot != EquipmentSlot.HEAD) {
             return original
         }
 
@@ -29,25 +27,8 @@ object MaskClientItemExtensions : IClientItemExtensions {
         }
 
         val baked = Minecraft.getInstance().entityModels.bakeLayer(ClothesModel.LAYER_LOCATION)
-        return ClothesModel<net.minecraft.client.renderer.entity.state.HumanoidRenderState>(baked).also {
+        return ClothesModel<LivingEntity>(baked).also {
             cachedModel = it
         }
     }
-
-    override fun getArmorTexture(
-        stack: ItemStack,
-        type: EquipmentClientInfo.LayerType,
-        layer: EquipmentClientInfo.Layer,
-        _default: Identifier,
-    ): Identifier = Identifier.fromNamespaceAndPath(
-        DecIsland.MOD_ID,
-        "textures/armor/mask/${BuiltInRegistries.ITEM.getKey(stack.item).path}.png",
-    )
-
-    override fun getArmorLayerTintColor(
-        stack: ItemStack,
-        layer: EquipmentClientInfo.Layer,
-        layerIdx: Int,
-        fallbackColor: Int,
-    ): Int = EquipmentLayerRenderer.getColorForLayer(layer, fallbackColor)
 }

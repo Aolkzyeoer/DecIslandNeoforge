@@ -4,28 +4,28 @@ import com.dec.decisland.DecIsland
 import com.dec.decisland.client.model.FashionArmorModel
 import com.dec.decisland.item.category.Fashion
 import net.minecraft.client.Minecraft
-import net.minecraft.client.model.Model
-import net.minecraft.client.renderer.entity.layers.EquipmentLayerRenderer
-import net.minecraft.client.renderer.entity.state.HumanoidRenderState
-import net.minecraft.client.resources.model.EquipmentClientInfo
-import net.minecraft.resources.Identifier
+import net.minecraft.client.model.HumanoidModel
+import net.minecraft.resources.ResourceLocation
+import net.minecraft.world.entity.EquipmentSlot
+import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.item.ItemStack
 import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions
 
 object FashionArmorClientItemExtensions : IClientItemExtensions {
-    private val cachedModels = mutableMapOf<Fashion.ModelKind, FashionArmorModel<HumanoidRenderState>>()
+    private val cachedModels = mutableMapOf<Fashion.ModelKind, FashionArmorModel<LivingEntity>>()
 
     @JvmStatic
-    fun textureFor(stack: ItemStack): Identifier = Identifier.fromNamespaceAndPath(
+    fun textureFor(stack: ItemStack): ResourceLocation = ResourceLocation.fromNamespaceAndPath(
         DecIsland.MOD_ID,
         "textures/armor/fashion/${stack.itemDescriptionIdPath()}.png",
     )
 
     override fun getHumanoidArmorModel(
+        livingEntity: LivingEntity,
         itemStack: ItemStack,
-        layerType: EquipmentClientInfo.LayerType,
-        original: Model<*>,
-    ): Model<*> {
+        equipmentSlot: EquipmentSlot,
+        original: HumanoidModel<*>,
+    ): HumanoidModel<*> {
         val definition = Fashion.definitionOf(itemStack) ?: return original
         if (definition.modelKind == Fashion.ModelKind.VANILLA) {
             return original
@@ -46,29 +46,15 @@ object FashionArmorClientItemExtensions : IClientItemExtensions {
         if (definition.modelKind == Fashion.ModelKind.GIANT_BAT_WINGS) {
             val baked = Minecraft.getInstance().entityModels.bakeLayer(layerLocation)
             FashionArmorModel.attachTextureMeshes(baked, definition.modelKind)
-            return FashionArmorModel<HumanoidRenderState>(baked)
+            return FashionArmorModel<LivingEntity>(baked)
         }
 
         return cachedModels.getOrPut(definition.modelKind) {
             val baked = Minecraft.getInstance().entityModels.bakeLayer(layerLocation)
             FashionArmorModel.attachTextureMeshes(baked, definition.modelKind)
-            FashionArmorModel<HumanoidRenderState>(baked)
+            FashionArmorModel<LivingEntity>(baked)
         }
     }
-
-    override fun getArmorTexture(
-        stack: ItemStack,
-        type: EquipmentClientInfo.LayerType,
-        layer: EquipmentClientInfo.Layer,
-        _default: Identifier,
-    ): Identifier = textureFor(stack)
-
-    override fun getArmorLayerTintColor(
-        stack: ItemStack,
-        layer: EquipmentClientInfo.Layer,
-        layerIdx: Int,
-        fallbackColor: Int,
-    ): Int = EquipmentLayerRenderer.getColorForLayer(layer, fallbackColor)
 
     private fun ItemStack.itemDescriptionIdPath(): String =
         net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(item).path

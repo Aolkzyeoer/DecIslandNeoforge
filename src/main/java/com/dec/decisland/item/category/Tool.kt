@@ -4,11 +4,14 @@ import com.dec.decisland.item.ItemConfig
 import com.dec.decisland.item.ModCreativeModeTabs
 import com.dec.decisland.item.ModItems
 import com.dec.decisland.item.ModToolMaterial
-import net.minecraft.client.data.models.model.ModelTemplates
+import com.dec.decisland.item.ToolMaterial
+import com.dec.decisland.item.compat.axe
+import com.dec.decisland.item.compat.pickaxe
+import com.dec.decisland.item.compat.repairable
+import net.minecraft.data.models.model.ModelTemplates
 import net.minecraft.tags.ItemTags
 import net.minecraft.world.item.Item
 import net.minecraft.world.item.Items
-import net.minecraft.world.item.ToolMaterial
 import net.neoforged.neoforge.registries.DeferredItem
 import java.util.function.Supplier
 

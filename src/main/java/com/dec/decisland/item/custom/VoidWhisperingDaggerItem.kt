@@ -9,8 +9,9 @@ import net.minecraft.sounds.SoundEvents
 import net.minecraft.sounds.SoundSource
 import net.minecraft.stats.Stats
 import net.minecraft.world.InteractionHand
-import net.minecraft.world.InteractionResult
+import net.minecraft.world.InteractionResultHolder
 import net.minecraft.world.entity.player.Player
+import net.minecraft.world.item.ItemStack
 import net.minecraft.world.level.Level
 
 // Void Whispering: right click consumes mana, thrusts, and throws the dagger as a projectile.
@@ -18,18 +19,18 @@ class VoidWhisperingDaggerItem(
     properties: Properties,
     config: DaggerConfig,
 ) : DaggerItem(properties, config) {
-    override fun use(level: Level, player: Player, hand: InteractionHand): InteractionResult {
+    override fun use(level: Level, player: Player, hand: InteractionHand): InteractionResultHolder<ItemStack> {
         val stack = player.getItemInHand(hand)
-        if (player.cooldowns.isOnCooldown(stack)) {
-            return InteractionResult.FAIL
+        if (player.cooldowns.isOnCooldown(stack.item)) {
+            return InteractionResultHolder.fail(stack)
         }
         if (ManaManager.getCurrentMana(player) <= MANA_COST) {
-            return InteractionResult.FAIL
+            return InteractionResultHolder.fail(stack)
         }
 
         if (level.isClientSide) {
             player.swing(hand, true)
-            return InteractionResult.SUCCESS
+            return InteractionResultHolder.success(stack)
         }
 
         val serverLevel = level as ServerLevel
@@ -45,7 +46,7 @@ class VoidWhisperingDaggerItem(
         player.awardStat(Stats.ITEM_USED.get(this))
         AccessoryCombatEffects.onSuccessfulWeaponUse(player, stack)
         player.swing(hand, true)
-        return InteractionResult.SUCCESS_SERVER
+        return InteractionResultHolder.consume(stack)
     }
 
     companion object {

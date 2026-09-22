@@ -1,8 +1,14 @@
 # This is an example neoforge.mods.toml file. It contains the data relating to the loading mods.
-# There are several mandatory fields (#mandatory), and many more that are optional (#optional).
+# It contains several mandatory fields (#mandatory), and many more that are optional (#optional).
 # The overall format is standard TOML format, v0.5.0.
 # Note that there are a couple of TOML lists in this file.
 # Find more information on toml format here:  https://github.com/toml-lang/toml
+
+# The loader mod type. Mandatory in NeoForge 21.1 (optional in newer versions).
+modLoader="javafml" #mandatory
+
+# The loader version range. Mandatory in NeoForge 21.1.
+loaderVersion="[4,)" #mandatory
 
 # The license for you mod. This is mandatory metadata and allows for easier comprehension of your redistributive properties.
 # Review your options at https://choosealicense.com/. All rights reserved is the default copyright stance, and is thus the default here.

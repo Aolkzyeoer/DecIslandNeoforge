@@ -1,22 +1,27 @@
 package com.dec.decisland.item
 
 import com.dec.decisland.tag.ModItemTags
-import com.google.common.collect.Maps
 import net.minecraft.core.Holder
 import net.minecraft.core.registries.Registries
-import net.minecraft.resources.Identifier
-import net.minecraft.resources.ResourceKey
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.sounds.SoundEvent
 import net.minecraft.sounds.SoundEvents
 import net.minecraft.tags.TagKey
+import net.minecraft.world.item.ArmorItem
+import net.minecraft.world.item.ArmorMaterial
 import net.minecraft.world.item.Item
-import net.minecraft.world.item.equipment.ArmorMaterial
-import net.minecraft.world.item.equipment.ArmorType
-import net.minecraft.world.item.equipment.EquipmentAsset
+import net.minecraft.world.item.crafting.Ingredient
+import java.util.function.Supplier
 
+/**
+ * 1.21.1 兼容层：以 1.21.4+ ArmorMaterial 的参数形态创建 1.21.1 的
+ * [ArmorMaterial] 记录（耐久作为倍率保存在 [ModArmorMaterial] 中，注册物品时使用）。
+ */
 object ModArmorMaterials {
     private val EMPTY_REPAIR_TAG: TagKey<Item> =
-        TagKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath("decisland", "unused_repair"))
+        TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath("decisland", "unused_repair"))
+
+    class ModArmorMaterial(val holder: Holder<ArmorMaterial>, val durabilityMultiplier: Int)
 
     private fun createArmorMaterial(
         durability: Int,
@@ -29,20 +34,22 @@ object ModArmorMaterials {
         toughness: Float,
         knockbackResistance: Float,
         repairTag: TagKey<Item>,
-        asset: ResourceKey<EquipmentAsset>,
-    ): ArmorMaterial = ArmorMaterial(
-        durability,
-        makeDefense(boots, leggings, chestplate, helmet, chestplate),
-        enchantability,
-        equipSound,
-        toughness,
-        knockbackResistance,
-        repairTag,
-        asset,
-    )
+        asset: ResourceLocation,
+    ): ModArmorMaterial {
+        val material = ArmorMaterial(
+            makeDefense(boots, leggings, chestplate, helmet, chestplate),
+            enchantability,
+            equipSound,
+            Supplier { Ingredient.of(repairTag) },
+            listOf(ArmorMaterial.Layer(asset)),
+            toughness,
+            knockbackResistance,
+        )
+        return ModArmorMaterial(Holder.direct(material), durability)
+    }
 
     @JvmField
-    val FASHION: ArmorMaterial = createArmorMaterial(
+    val FASHION: ModArmorMaterial = createArmorMaterial(
         durability = 4,
         boots = 1,
         leggings = 1,
@@ -57,7 +64,7 @@ object ModArmorMaterials {
     )
 
     @JvmField
-    val AMETHYST: ArmorMaterial = createArmorMaterial(
+    val AMETHYST: ModArmorMaterial = createArmorMaterial(
         durability = 12,
         boots = 2,
         leggings = 2,
@@ -72,7 +79,7 @@ object ModArmorMaterials {
     )
 
     @JvmField
-    val CRYING: ArmorMaterial = createArmorMaterial(
+    val CRYING: ModArmorMaterial = createArmorMaterial(
         durability = 58,
         boots = 4,
         leggings = 7,
@@ -87,7 +94,7 @@ object ModArmorMaterials {
     )
 
     @JvmField
-    val DIRT: ArmorMaterial = createArmorMaterial(
+    val DIRT: ModArmorMaterial = createArmorMaterial(
         durability = 3,
         boots = 1,
         leggings = 1,
@@ -102,7 +109,7 @@ object ModArmorMaterials {
     )
 
     @JvmField
-    val EMERALD: ArmorMaterial = createArmorMaterial(
+    val EMERALD: ModArmorMaterial = createArmorMaterial(
         durability = 14,
         boots = 2,
         leggings = 4,
@@ -117,7 +124,7 @@ object ModArmorMaterials {
     )
 
     @JvmField
-    val EVERLASTING_WINTER: ArmorMaterial = createArmorMaterial(
+    val EVERLASTING_WINTER: ModArmorMaterial = createArmorMaterial(
         durability = 128,
         boots = 3,
         leggings = 6,
@@ -132,7 +139,7 @@ object ModArmorMaterials {
     )
 
     @JvmField
-    val FROZEN: ArmorMaterial = createArmorMaterial(
+    val FROZEN: ModArmorMaterial = createArmorMaterial(
         durability = 14,
         boots = 2,
         leggings = 4,
@@ -147,7 +154,7 @@ object ModArmorMaterials {
     )
 
     @JvmField
-    val LAVA: ArmorMaterial = createArmorMaterial(
+    val LAVA: ModArmorMaterial = createArmorMaterial(
         durability = 24,
         boots = 2,
         leggings = 5,
@@ -162,7 +169,7 @@ object ModArmorMaterials {
     )
 
     @JvmField
-    val PIGLIN: ArmorMaterial = createArmorMaterial(
+    val PIGLIN: ModArmorMaterial = createArmorMaterial(
         durability = 26,
         boots = 0,
         leggings = 5,
@@ -177,7 +184,7 @@ object ModArmorMaterials {
     )
 
     @JvmField
-    val RUPERT: ArmorMaterial = createArmorMaterial(
+    val RUPERT: ModArmorMaterial = createArmorMaterial(
         durability = 24,
         boots = 1,
         leggings = 3,
@@ -192,7 +199,7 @@ object ModArmorMaterials {
     )
 
     @JvmField
-    val SHULKER: ArmorMaterial = createArmorMaterial(
+    val SHULKER: ModArmorMaterial = createArmorMaterial(
         durability = 11,
         boots = 0,
         leggings = 0,
@@ -207,7 +214,7 @@ object ModArmorMaterials {
     )
 
     @JvmField
-    val STEEL: ArmorMaterial = createArmorMaterial(
+    val STEEL: ModArmorMaterial = createArmorMaterial(
         durability = 26,
         boots = 3,
         leggings = 5,
@@ -222,7 +229,7 @@ object ModArmorMaterials {
     )
 
     @JvmField
-    val STONE: ArmorMaterial = createArmorMaterial(
+    val STONE: ModArmorMaterial = createArmorMaterial(
         durability = 4,
         boots = 1,
         leggings = 2,
@@ -237,7 +244,7 @@ object ModArmorMaterials {
     )
 
     @JvmField
-    val TURTLE: ArmorMaterial = createArmorMaterial(
+    val TURTLE: ModArmorMaterial = createArmorMaterial(
         durability = 35,
         boots = 3,
         leggings = 6,
@@ -252,7 +259,7 @@ object ModArmorMaterials {
     )
 
     @JvmField
-    val WOOD: ArmorMaterial = createArmorMaterial(
+    val WOOD: ModArmorMaterial = createArmorMaterial(
         durability = 12,
         boots = 1,
         leggings = 2,
@@ -272,13 +279,12 @@ object ModArmorMaterials {
         chestplate: Int,
         helmet: Int,
         body: Int,
-    ): Map<ArmorType, Int> = Maps.newEnumMap(
+    ): Map<ArmorItem.Type, Int> =
         mapOf(
-            ArmorType.BOOTS to boots,
-            ArmorType.LEGGINGS to leggings,
-            ArmorType.CHESTPLATE to chestplate,
-            ArmorType.HELMET to helmet,
-            ArmorType.BODY to body,
-        ),
-    )
+            ArmorItem.Type.BOOTS to boots,
+            ArmorItem.Type.LEGGINGS to leggings,
+            ArmorItem.Type.CHESTPLATE to chestplate,
+            ArmorItem.Type.HELMET to helmet,
+            ArmorItem.Type.BODY to body,
+        )
 }

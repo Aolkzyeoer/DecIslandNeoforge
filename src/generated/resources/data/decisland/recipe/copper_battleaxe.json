@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "#": {
+      "item": "decisland:iron_stick"
+    },
+    "X": {
+      "item": "minecraft:copper_ingot"
+    }
+  },
+  "pattern": [
+    "XXX",
+    " #X",
+    " # "
+  ],
+  "result": {
+    "count": 1,
+    "id": "decisland:copper_battleaxe"
+  }
+}

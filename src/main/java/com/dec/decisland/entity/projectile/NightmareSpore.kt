@@ -3,7 +3,7 @@ package com.dec.decisland.entity.projectile
 import com.dec.decisland.DecIsland
 import com.dec.decisland.entity.ModEntities
 import net.minecraft.network.syncher.SynchedEntityData
-import net.minecraft.resources.Identifier
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.entity.EntityType
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.item.ItemStack
@@ -24,8 +24,8 @@ class NightmareSpore(entityType: EntityType<NightmareSpore>, level: Level) : Nig
     override val airInertia: Double = 0.15
     override val waterInertia: Double = 0.10
     override val blockExtent: Double = 0.3
-    override val trailParticleId: Identifier = Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "nightmare_spore_particle")
-    override val spawnParticleId: Identifier = Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "nightmare_block_spawn_particle")
+    override val trailParticleId: ResourceLocation = ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "nightmare_spore_particle")
+    override val spawnParticleId: ResourceLocation = ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "nightmare_block_spawn_particle")
 
     override fun defineSynchedData(builder: SynchedEntityData.Builder) {
     }

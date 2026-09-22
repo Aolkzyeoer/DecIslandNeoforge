@@ -1,5 +1,6 @@
 package com.dec.decisland.item.custom
 
+import com.dec.decisland.item.compat.asEquipmentSlot
 import com.dec.decisland.mana.ManaManager
 import net.minecraft.core.component.DataComponents
 import net.minecraft.nbt.CompoundTag
@@ -8,9 +9,8 @@ import net.minecraft.sounds.SoundEvent
 import net.minecraft.sounds.SoundEvents
 import net.minecraft.sounds.SoundSource
 import net.minecraft.world.InteractionHand
-import net.minecraft.world.InteractionResult
+import net.minecraft.world.InteractionResultHolder
 import net.minecraft.world.entity.EntityType
-import net.minecraft.world.entity.EntitySpawnReason
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.component.CustomData
@@ -22,17 +22,17 @@ class FrozenStaff(properties: Properties) : MagicWeapon(properties) {
 
     override fun getCastSound(): SoundEvent = SoundEvents.AMETHYST_BLOCK_BREAK
 
-    override fun use(level: Level, player: Player, hand: InteractionHand): InteractionResult {
+    override fun use(level: Level, player: Player, hand: InteractionHand): InteractionResultHolder<ItemStack> {
         val stack = player.getItemInHand(hand)
         if (level.isClientSide) {
-            return if (willFireNextShot(stack)) InteractionResult.CONSUME else InteractionResult.PASS
+            return if (willFireNextShot(stack)) InteractionResultHolder.consume(stack) else InteractionResultHolder.pass(stack)
         }
 
-        val serverLevel = level as? ServerLevel ?: return InteractionResult.PASS
+        val serverLevel = level as? ServerLevel ?: return InteractionResultHolder.pass(stack)
         val currentMana = ManaManager.getCurrentMana(player)
         if (currentMana < CHARGE_MANA_COST) {
             setSkillCount(stack, 0)
-            return InteractionResult.FAIL
+            return InteractionResultHolder.fail(stack)
         }
 
         var skillCount = getSkillCount(stack)
@@ -46,15 +46,15 @@ class FrozenStaff(properties: Properties) : MagicWeapon(properties) {
         if (!shouldFire) {
             ManaManager.reduceMana(player, CHARGE_MANA_COST)
             setSkillCount(stack, nextSkillCount)
-            return InteractionResult.CONSUME
+            return InteractionResultHolder.consume(stack)
         }
 
         if (currentMana < SHOT_MANA_COST) {
-            return InteractionResult.FAIL
+            return InteractionResultHolder.fail(stack)
         }
 
         if (!spawnSnowball(serverLevel, player)) {
-            return InteractionResult.FAIL
+            return InteractionResultHolder.fail(stack)
         }
 
         ManaManager.reduceMana(player, SHOT_MANA_COST)
@@ -62,7 +62,7 @@ class FrozenStaff(properties: Properties) : MagicWeapon(properties) {
         playSound(serverLevel, player, getCastSound(), getCastSoundVolume(), getCastSoundPitch())
         player.swing(hand, true)
         setSkillCount(stack, if (nextSkillCount >= RESET_THRESHOLD) 0 else nextSkillCount)
-        return InteractionResult.SUCCESS_SERVER
+        return InteractionResultHolder.success(stack)
     }
 
     private fun willFireNextShot(stack: ItemStack): Boolean {
@@ -74,7 +74,7 @@ class FrozenStaff(properties: Properties) : MagicWeapon(properties) {
     }
 
     private fun spawnSnowball(serverLevel: ServerLevel, player: Player): Boolean {
-        val projectile = EntityType.SNOWBALL.create(serverLevel, EntitySpawnReason.TRIGGERED) ?: return false
+        val projectile = EntityType.SNOWBALL.create(serverLevel) ?: return false
         projectile.setOwner(player)
         val view = player.getViewVector(0.0f)
         val spawnPos = player.eyePosition.add(view.scale(SPAWN_FORWARD_OFFSET))
@@ -98,7 +98,7 @@ class FrozenStaff(properties: Properties) : MagicWeapon(properties) {
 
     private fun getSkillCount(stack: ItemStack): Int {
         val tag = readTag(stack)
-        return if (tag.contains(SKILL_COUNT_KEY)) tag.getInt(SKILL_COUNT_KEY).get() else 0
+        return if (tag.contains(SKILL_COUNT_KEY)) tag.getInt(SKILL_COUNT_KEY) else 0
     }
 
     private fun setSkillCount(stack: ItemStack, value: Int) {

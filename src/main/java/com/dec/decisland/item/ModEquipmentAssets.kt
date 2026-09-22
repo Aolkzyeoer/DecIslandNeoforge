@@ -1,57 +1,58 @@
 package com.dec.decisland.item
 
 import com.dec.decisland.DecIsland
-import net.minecraft.resources.Identifier
-import net.minecraft.resources.ResourceKey
-import net.minecraft.world.item.equipment.EquipmentAsset
-import net.minecraft.world.item.equipment.EquipmentAssets
+import net.minecraft.resources.ResourceLocation
 
+/**
+ * 1.21.1 兼容层：1.21.4+ 的 EquipmentAsset 注册表改为直接使用 ResourceLocation
+ * （1.21.1 的 ArmorMaterial.Layer 以 ResourceLocation 定位盔甲纹理）。
+ */
 object ModEquipmentAssets {
     @JvmField
-    val FASHION: ResourceKey<EquipmentAsset> = createId("fashion")
+    val FASHION: ResourceLocation = createId("fashion")
 
     @JvmField
-    val AMETHYST: ResourceKey<EquipmentAsset> = createId("amethyst")
+    val AMETHYST: ResourceLocation = createId("amethyst")
 
     @JvmField
-    val CRYING: ResourceKey<EquipmentAsset> = createId("crying")
+    val CRYING: ResourceLocation = createId("crying")
 
     @JvmField
-    val DIRT: ResourceKey<EquipmentAsset> = createId("dirt")
+    val DIRT: ResourceLocation = createId("dirt")
 
     @JvmField
-    val EMERALD: ResourceKey<EquipmentAsset> = createId("emerald")
+    val EMERALD: ResourceLocation = createId("emerald")
 
     @JvmField
-    val EVERLASTING_WINTER: ResourceKey<EquipmentAsset> = createId("everlasting_winter")
+    val EVERLASTING_WINTER: ResourceLocation = createId("everlasting_winter")
 
     @JvmField
-    val FROZEN: ResourceKey<EquipmentAsset> = createId("frozen")
+    val FROZEN: ResourceLocation = createId("frozen")
 
     @JvmField
-    val LAVA: ResourceKey<EquipmentAsset> = createId("lava")
+    val LAVA: ResourceLocation = createId("lava")
 
     @JvmField
-    val PIGLIN: ResourceKey<EquipmentAsset> = createId("piglin")
+    val PIGLIN: ResourceLocation = createId("piglin")
 
     @JvmField
-    val RUPERT: ResourceKey<EquipmentAsset> = createId("rupert")
+    val RUPERT: ResourceLocation = createId("rupert")
 
     @JvmField
-    val SHULKER: ResourceKey<EquipmentAsset> = createId("shulker")
+    val SHULKER: ResourceLocation = createId("shulker")
 
     @JvmField
-    val STEEL: ResourceKey<EquipmentAsset> = createId("steel")
+    val STEEL: ResourceLocation = createId("steel")
 
     @JvmField
-    val STONE: ResourceKey<EquipmentAsset> = createId("stone")
+    val STONE: ResourceLocation = createId("stone")
 
     @JvmField
-    val TURTLE: ResourceKey<EquipmentAsset> = createId("turtle")
+    val TURTLE: ResourceLocation = createId("turtle")
 
     @JvmField
-    val WOOD: ResourceKey<EquipmentAsset> = createId("wood")
+    val WOOD: ResourceLocation = createId("wood")
 
-    private fun createId(name: String): ResourceKey<EquipmentAsset> =
-        ResourceKey.create(EquipmentAssets.ROOT_ID, Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, name))
+    private fun createId(name: String): ResourceLocation =
+        ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, name)
 }

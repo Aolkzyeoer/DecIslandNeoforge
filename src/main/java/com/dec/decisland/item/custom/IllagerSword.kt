@@ -1,11 +1,12 @@
 package com.dec.decisland.item.custom
 
 import com.dec.decisland.DecIsland
-import net.minecraft.resources.Identifier
+import com.dec.decisland.item.compat.ItemCompat
+import net.minecraft.resources.ResourceLocation
 import net.minecraft.server.level.ServerLevel
 import net.minecraft.world.entity.Entity
-import net.minecraft.world.entity.EquipmentSlot
 import net.minecraft.world.item.ItemStack
+import net.minecraft.world.level.Level
 import java.util.Random
 
 class IllagerSword(properties: Properties) : Katana(properties) {
@@ -31,16 +32,21 @@ class IllagerSword(properties: Properties) : Katana(properties) {
 
     override fun onAttackTriggerSweep(stack: ItemStack): Boolean = Random().nextInt(8) == 0
 
-    override fun inventoryTick(stack: ItemStack, level: ServerLevel, entity: Entity, slot: EquipmentSlot?) {
-        super.inventoryTick(stack, level, entity, slot)
-        updateMovementSpeedModifier(entity, slot, MOVEMENT_SPEED_ADDITION, MOVEMENT_SPEED_MODIFIER_ID)
+    override fun inventoryTick(stack: ItemStack, level: Level, entity: Entity, slotId: Int, isSelected: Boolean) {
+        super.inventoryTick(stack, level, entity, slotId, isSelected)
+        updateMovementSpeedModifier(
+            entity,
+            ItemCompat.slotFromIndex(slotId),
+            MOVEMENT_SPEED_ADDITION,
+            MOVEMENT_SPEED_MODIFIER_ID,
+        )
     }
 
     companion object {
-        private val ILLAGER_SWORD_PARTICLE_ID: Identifier =
-            Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "illager_sword_particle")
-        private val MOVEMENT_SPEED_MODIFIER_ID: Identifier =
-            Identifier.fromNamespaceAndPath(DecIsland.MOD_ID, "movement_speed/illager_sword")
+        private val ILLAGER_SWORD_PARTICLE_ID: ResourceLocation =
+            ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "illager_sword_particle")
+        private val MOVEMENT_SPEED_MODIFIER_ID: ResourceLocation =
+            ResourceLocation.fromNamespaceAndPath(DecIsland.MOD_ID, "movement_speed/illager_sword")
         private const val MOVEMENT_SPEED_ADDITION: Double = 0.015
     }
 }
