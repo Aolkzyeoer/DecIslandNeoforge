@@ -81,8 +81,16 @@ object ModCreativeModeTabs {
     val DECISLAND_MASKS_TAB: Supplier<CreativeModeTab> = registerTab(
         CreativeTabConfig.Builder(
             "decisland_masks_tab",
-            mapOf("en_us" to "DecIsland Masks", "zh_cn" to "DecIsland \u9762\u5177"),
+            mapOf("en_us" to "DecIsland Masks", "zh_cn" to "DecIsland 面具"),
         ).iconItem { Mask.FRANK_MASK.get() }.build(),
+    )
+
+    @JvmField
+    val DECISLAND_BLOCKS_TAB: Supplier<CreativeModeTab> = registerTab(
+        CreativeTabConfig.Builder(
+            "decisland_blocks_tab",
+            mapOf("en_us" to "DecIsland Blocks", "zh_cn" to "DecIsland 方块"),
+        ).iconItem { ModBlocks.RED_LANTERN.get().asItem() }.build(),
     )
 
     private fun addItemsToTab(tabConfig: CreativeTabConfig, output: CreativeModeTab.Output) {

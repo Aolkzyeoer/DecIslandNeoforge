@@ -1317,6 +1317,7 @@
   "item.spawn_egg.entity.dec:zombie_summoner.name": "生成 僵尸召唤师",
   "item.spawn_egg.entity.dec:zombie_warrior.name": "生成 僵尸战士",
   "itemGroup.decisland_accessories_tab": "DecIsland 饰品",
+  "itemGroup.decisland_blocks_tab": "DecIsland 方块",
   "itemGroup.decisland_crops_tab": "DecIsland 作物",
   "itemGroup.decisland_foods_tab": "DecIsland 食物",
   "itemGroup.decisland_masks_tab": "DecIsland 面具",
