@@ -1105,7 +1105,7 @@ rc += `object GeneratedMobClient {
     fun registerAll() {
 `;
 for (const c of vanillaRens) {
-  rc += `        EntityRenderers.register(GeneratedMobs.${upper(c.name)}.get(), ::${renClassNames[c.name]})\n`;
+  rc += `        EntityRenderers.register<${c.renGeneric ?? c.sup}>(GeneratedMobs.${upper(c.name)}.get(), ::${renClassNames[c.name]})\n`;
 }
 for (const c of customRens) {
   rc += `        EntityRenderers.register(GeneratedMobs.${upper(c.name)}.get()) { context ->
