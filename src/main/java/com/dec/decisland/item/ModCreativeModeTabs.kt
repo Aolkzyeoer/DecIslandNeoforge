@@ -2,6 +2,7 @@ package com.dec.decisland.item
 
 import com.dec.decisland.DecIsland
 import com.dec.decisland.block.ModBlocks
+import com.dec.decisland.entity.GeneratedMobs
 import com.dec.decisland.item.category.Accessory
 import com.dec.decisland.item.category.Mask
 import com.dec.decisland.item.category.Material
@@ -93,6 +94,14 @@ object ModCreativeModeTabs {
         ).iconItem { ModBlocks.RED_LANTERN.get().asItem() }.build(),
     )
 
+    @JvmField
+    val DECISLAND_ENTITIES_TAB: Supplier<CreativeModeTab> = registerTab(
+        CreativeTabConfig.Builder(
+            "decisland_entities_tab",
+            mapOf("en_us" to "DecIsland Entities", "zh_cn" to "DecIsland 生物"),
+        ).iconItem { GeneratedMobs.GOBLIN_WIZARD_EGG.get() }.build(),
+    )
+
     private fun addItemsToTab(tabConfig: CreativeTabConfig, output: CreativeModeTab.Output) {
         val currentTab = CREATIVE_MOD_TABS.getEntries()
             .firstOrNull { it.id.path == tabConfig.name }
@@ -114,6 +123,11 @@ object ModCreativeModeTabs {
                     ?.value()
                     ?.let(output::accept)
             }
+        }
+
+        // 生成生物刷怪蛋全部归入 DecIsland 生物标签页
+        if (currentTab != null && currentTab == DECISLAND_ENTITIES_TAB.get()) {
+            GeneratedMobs.SPAWN_EGGS.entries.forEach { output.accept(it.get()) }
         }
     }
 

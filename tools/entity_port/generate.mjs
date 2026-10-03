@@ -346,6 +346,89 @@ function convertTexture(srcPath, outName, human64) {
   return 'convert';
 }
 
+// ============ 刷怪蛋颜色：贴图平均色 + 名字哈希兜底 ============
+function decodePNG(buf) {
+  // 极简 PNG 解码：仅支持 8bit RGB(2)/RGBA(6) + filter 0-4（实体贴图均为此格式）
+  if (buf.length < 8 || buf.readUInt32BE(0) !== 0x89504e47) return null;
+  let pos = 8, w = 0, h = 0, bpp = 0;
+  const idat = [];
+  while (pos + 8 <= buf.length) {
+    const len = buf.readUInt32BE(pos), type = buf.toString('ascii', pos + 4, pos + 8);
+    const data = buf.subarray(pos + 8, pos + 8 + len);
+    if (type === 'IHDR') {
+      w = data.readUInt32BE(0); h = data.readUInt32BE(4);
+      if (data[8] !== 8) return null;
+      bpp = data[9] === 6 ? 4 : (data[9] === 2 ? 3 : 0);
+      if (!bpp) return null;
+    } else if (type === 'IDAT') idat.push(data);
+    else if (type === 'IEND') break;
+    pos += 12 + len;
+  }
+  if (!w || !h || !idat.length) return null;
+  let raw;
+  try { raw = zlib.inflateSync(Buffer.concat(idat)); } catch { return null; }
+  const stride = w * bpp, out = Buffer.alloc(w * h * 4);
+  let prev = Buffer.alloc(stride);
+  for (let y = 0; y < h; y++) {
+    const f = raw[y * (stride + 1)], line = raw.subarray(y * (stride + 1) + 1, (y + 1) * (stride + 1));
+    const cur = Buffer.alloc(stride);
+    for (let i = 0; i < stride && i < line.length; i++) {
+      const a = i >= bpp ? cur[i - bpp] : 0, b = prev[i], c = i >= bpp ? prev[i - bpp] : 0;
+      let v = line[i];
+      if (f === 1) v = (v + a) & 0xff;
+      else if (f === 2) v = (v + b) & 0xff;
+      else if (f === 3) v = (v + ((a + b) >> 1)) & 0xff;
+      else if (f === 4) {
+        const p = a + b - c, pa = Math.abs(p - a), pb = Math.abs(p - b), pc = Math.abs(p - c);
+        v = (v + (pa <= pb && pa <= pc ? a : pb <= pc ? b : c)) & 0xff;
+      }
+      cur[i] = v;
+    }
+    prev = cur;
+    for (let x = 0; x < w; x++) {
+      const s = x * bpp, d = (y * w + x) * 4;
+      if (bpp === 4) cur.copy(out, d, s, s + 4);
+      else { out[d] = cur[s]; out[d + 1] = cur[s + 1]; out[d + 2] = cur[s + 2]; out[d + 3] = 255; }
+    }
+  }
+  return { width: w, height: h, px: out };
+}
+
+function hslToRgb(hue, sat, lit) {
+  const f = (n) => {
+    const k = (n + hue * 12) % 12, a = sat * Math.min(lit, 1 - lit);
+    return Math.round(255 * (lit - a * Math.max(-1, Math.min(k - 3, 9 - k, 1))));
+  };
+  return [f(0), f(8), f(4)];
+}
+
+function eggColorsFor(name, pngPath) {
+  // 优先取实体贴图平均色（跳过透明像素）；无贴图/解码失败 → 名字 FNV 哈希出稳定色相
+  let rgb = null;
+  try {
+    const img = decodePNG(fs.readFileSync(pngPath));
+    if (img) {
+      let r = 0, g = 0, b = 0, n = 0;
+      for (let i = 0; i < img.px.length; i += 4) {
+        if (img.px[i + 3] < 32) continue;
+        r += img.px[i]; g += img.px[i + 1]; b += img.px[i + 2]; n++;
+      }
+      if (n >= 16) rgb = [r / n, g / n, b / n];
+    }
+  } catch { /* 无文件 → 哈希兜底 */ }
+  if (!rgb) {
+    let hsh = 2166136261;
+    for (const ch of name) { hsh ^= ch.charCodeAt(0); hsh = Math.imul(hsh, 16777619) >>> 0; }
+    rgb = hslToRgb((hsh % 360) / 360, 0.55, 0.45);
+  }
+  const [r, g, b] = rgb;
+  const cl = (v) => Math.min(255, Math.round(v));
+  return {
+    bg: (Math.round(r) << 16) | (Math.round(g) << 8) | Math.round(b),
+    hi: (cl(r * 1.35 + 18) << 16) | (cl(g * 1.35 + 18) << 8) | cl(b * 1.35 + 18),
+  };
+}
+
 // ============ 行为解析 ============
 function parseBehavior(name) {
   const p = `${BP}/entities/${name}.json`;
@@ -777,6 +860,7 @@ log.info.push(`贴图ID池: dec ${[...ITEM_IDS].filter((i) => !i.startsWith('mc:
 
 const results = [];
 const texOverrideMap = {}; // name → 原版基类实体是否有自定义贴图（决定是否覆写 getTextureLocation）
+const eggColors = {};     // name → { bg, hi } 刷怪蛋颜色（贴图平均色/名字哈希兜底）
 const categorized = fs.existsSync('C:/Users/Administrator/AppData/Local/Temp/bedrock_entity_cats.txt')
   ? fs.readFileSync('C:/Users/Administrator/AppData/Local/Temp/bedrock_entity_cats.txt', 'utf8') : '';
 
@@ -831,6 +915,8 @@ for (const name of PORT_LIST) {
   // 战利品 & 生成条件
   const loot = convertLoot(name);
   const spawn = convertSpawnRule(name);
+  // 刷怪蛋颜色：优先贴图平均色
+  eggColors[name] = eggColorsFor(name, `${RES}/assets/decisland/textures/entity/${name}.png`);
 
   results.push({ name, bh, ce, runtime, impl, loot, spawn });
 }
@@ -880,11 +966,14 @@ import net.minecraft.world.entity.ai.attributes.AttributeSupplier
 import net.minecraft.world.entity.ai.attributes.Attributes
 import net.minecraft.world.entity.monster.Monster
 import net.minecraft.world.entity.Mob
+import net.minecraft.world.item.Item
 import net.minecraft.world.level.levelgen.Heightmap
 import net.neoforged.bus.api.IEventBus
+import net.neoforged.neoforge.common.DeferredSpawnEggItem
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent
 import net.neoforged.neoforge.event.entity.RegisterSpawnPlacementsEvent
 import net.neoforged.neoforge.registries.DeferredHolder
+import net.neoforged.neoforge.registries.DeferredItem
 import net.neoforged.neoforge.registries.DeferredRegister
 import java.util.function.Supplier
 
@@ -893,6 +982,10 @@ object GeneratedMobs {
     @JvmField
     val ENTITY_TYPES: DeferredRegister<EntityType<*>> =
         DeferredRegister.create(Registries.ENTITY_TYPE, DecIsland.MOD_ID)
+
+    @JvmField
+    val SPAWN_EGGS: DeferredRegister.Items =
+        DeferredRegister.createItems(DecIsland.MOD_ID)
 
     private fun <T : Entity> registerEntity(
         name: String,
@@ -983,6 +1076,15 @@ for (const r of results) {
 `;
     attrEntries.push(`        ${upper(r.name)} to Supplier { BedrockMob.createAttributes(CFG_${upper(r.name)}) }`);
   }
+  // 刷怪蛋：颜色取贴图平均色（兜底名字哈希）
+  const ec = eggColors[r.name];
+  g += `
+    @JvmField
+    val ${upper(r.name)}_EGG: DeferredItem<DeferredSpawnEggItem> =
+        SPAWN_EGGS.register("${r.name}_spawn_egg", Supplier {
+            DeferredSpawnEggItem(Supplier { ${upper(r.name)}.get() }, ${ec.bg}, ${ec.hi}, Item.Properties())
+        })
+`;
   if (r.spawn) {
     const rule = r.bh.water || r.spawn.water ? 'WATER' : (cat === 'MONSTER' ? 'MONSTER' : 'MOB');
     spawnEntries.push(`        SpawnEntry(${upper(r.name)}, "${rule}")`);
@@ -1019,6 +1121,14 @@ if (undeadTagIds.length) {
   console.log(`entity_type 标签: undead×5=${undeadTagIds.length}`);
 }
 
+// ==== 刷怪蛋物品模型（template_spawn_egg 纯色蛋，颜色由物品注册时的 int 决定） ====
+const eggModelDir = `${RES}/assets/decisland/models/item`;
+fs.mkdirSync(eggModelDir, { recursive: true });
+for (const r of results) {
+  fs.writeFileSync(`${eggModelDir}/${r.name}_spawn_egg.json`, `${JSON.stringify({ parent: 'minecraft:item/template_spawn_egg' }, null, 2)}\n`);
+}
+console.log(`刷怪蛋: ${results.length} 个（物品模型 + 注册）`);
+
 g += `
     // ==== 属性 ====
     data class SpawnEntry(val type: Supplier<out EntityType<*>>, val rule: String)
@@ -1036,6 +1146,7 @@ ${spawnEntries.join(',\n')}
     @JvmStatic
     fun register(modEventBus: IEventBus) {
         ENTITY_TYPES.register(modEventBus)
+        SPAWN_EGGS.register(modEventBus)
     }
 
     @JvmStatic
