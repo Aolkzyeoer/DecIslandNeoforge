@@ -945,7 +945,7 @@ for (const r of results) {
     const defHp = VANILLA_HP[r.impl.cls] ?? 20;
     if (Math.abs(r.bh.health - defHp) > 0.01) ov += `.add(${ATTRS}.MAX_HEALTH, ${Math.max(1, r.bh.health).toFixed(1)})`;
     if (r.impl.pkg === 'monster' && r.bh.melee) ov += `.add(${ATTRS}.ATTACK_DAMAGE, ${Math.max(0.5, r.bh.attack).toFixed(1)})`;
-    attrEntries.push(`        ${upper(r.name)} to ${fqAttr(r)}${ov}`);
+    attrEntries.push(`        ${upper(r.name)} to Supplier { ${fqAttr(r)}${ov} }`);
   } else {
     // custom BedrockMob
     const c = r.bh;
@@ -981,7 +981,7 @@ for (const r of results) {
             sized(${w.toFixed(2)}f, ${h.toFixed(2)}f)
         }
 `;
-    attrEntries.push(`        ${upper(r.name)} to BedrockMob.createAttributes(CFG_${upper(r.name)})`);
+    attrEntries.push(`        ${upper(r.name)} to Supplier { BedrockMob.createAttributes(CFG_${upper(r.name)}) }`);
   }
   if (r.spawn) {
     const rule = r.bh.water || r.spawn.water ? 'WATER' : (cat === 'MONSTER' ? 'MONSTER' : 'MOB');
@@ -1024,7 +1024,7 @@ g += `
     data class SpawnEntry(val type: Supplier<out EntityType<*>>, val rule: String)
 
     @JvmStatic
-    val ATTRIBUTE_ENTRIES: List<Pair<Supplier<out EntityType<*>>, AttributeSupplier.Builder>> = listOf(
+    val ATTRIBUTE_ENTRIES: List<Pair<Supplier<out EntityType<*>>, Supplier<AttributeSupplier.Builder>>> = listOf(
 ${attrEntries.join(',\n')}
     )
 
@@ -1041,7 +1041,8 @@ ${spawnEntries.join(',\n')}
     @JvmStatic
     fun registerAttributes(event: EntityAttributeCreationEvent) {
         for ((type, builder) in ATTRIBUTE_ENTRIES) {
-            event.put(@Suppress("UNCHECKED_CAST") (type.get() as EntityType<out LivingEntity>), builder.build())
+            // Builder 必须在事件回调期构建：<clinit> 时 NeoForge 扩展属性（swim_speed 等）尚未绑定会 NPE
+            event.put(@Suppress("UNCHECKED_CAST") (type.get() as EntityType<out LivingEntity>), builder.get().build())
         }
     }
 
