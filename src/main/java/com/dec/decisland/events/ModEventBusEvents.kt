@@ -4,6 +4,7 @@ import com.dec.decisland.DecIsland
 import com.dec.decisland.client.model.ClothesModel
 import com.dec.decisland.client.model.EmptyModel
 import com.dec.decisland.client.model.FashionArmorModel
+import com.dec.decisland.entity.GeneratedMobs
 import com.dec.decisland.entity.ModEntities
 import com.dec.decisland.entity.custom.ElfOfLeaves
 import com.dec.decisland.entity.custom.LeavesGolem
@@ -43,6 +44,7 @@ object ModEventBusEvents {
         event.put(ModEntities.ZOMBIE_WARRIOR.get(), ZombieWarrior.createWarriorAttributes().build())
         event.put(ModEntities.LEAVES_GOLEM.get(), LeavesGolem.createGolemAttributes().build())
         event.put(ModEntities.ELF_OF_LEAVES.get(), ElfOfLeaves.createElfAttributes().build())
+        GeneratedMobs.registerAttributes(event)
     }
 
     @SubscribeEvent
@@ -55,6 +57,7 @@ object ModEventBusEvents {
             Monster::checkMonsterSpawnRules,
             RegisterSpawnPlacementsEvent.Operation.REPLACE,
         )
+        GeneratedMobs.registerSpawnPlacements(event)
     }
 
     @SubscribeEvent

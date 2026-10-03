@@ -9,6 +9,7 @@ import com.dec.decisland.client.renderer.DartRenderer
 import com.dec.decisland.client.renderer.ElfOfLeavesRenderer
 import com.dec.decisland.client.renderer.EmptyRenderer
 import com.dec.decisland.client.renderer.EnergyBallBedrockRenderer
+import com.dec.decisland.client.renderer.GeneratedMobClient
 import com.dec.decisland.client.renderer.FashionArmorClientItemExtensions
 import com.dec.decisland.client.renderer.LeavesGolemRenderer
 import com.dec.decisland.client.renderer.MaskClientItemExtensions
@@ -152,6 +153,7 @@ object ModClientEvents {
         EntityRenderers.register(ModEntities.BULLET_BY_LAVA_FLINTLOCK.get(), ::ThrownItemRenderer)
         EntityRenderers.register(ModEntities.BULLET_BY_STAR_FLINTLOCK.get(), ::ThrownItemRenderer)
         EntityRenderers.register(ModEntities.BULLET_BY_STORM_FLINTLOCK.get(), ::ThrownItemRenderer)
+        GeneratedMobClient.registerAll()
     }
 
     @SubscribeEvent
